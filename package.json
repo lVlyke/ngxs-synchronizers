@@ -1,7 +1,7 @@
 {
   "name": "ngxs-synchronizers",
   "version": "0.0.1-beta.0",
-  "description": "???",
+  "description": "Utilities for keeping a local NGXS store synced with a remote store.",
   "main": "index.js",
   "author": "Mychal Thompson <mychal.r.thompson@gmail.com>",
   "license": "MIT",
