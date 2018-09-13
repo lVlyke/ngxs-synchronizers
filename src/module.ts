@@ -1,9 +1,9 @@
 import { NgModule } from "@angular/core";
-import { SynchronizerStore } from "./synchronizer-store";
+import { SyncStore } from "./sync-store";
 
 @NgModule({
     providers: [
-        SynchronizerStore
+        SyncStore
     ]
 })
-export class NgxsSynchronizersModule {}
+export class NgxsSyncModule {}

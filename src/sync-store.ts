@@ -3,10 +3,10 @@ import { Observable, BehaviorSubject, zip, merge, of, forkJoin } from "rxjs";
 import { filter, map, distinctUntilChanged, flatMap, take, catchError, shareReplay } from "rxjs/operators";
 import { Injectable } from "@angular/core";
 import { Synchronizer } from "./synchronizer";
-import { SynchronizerState } from "./synchronizer-state";
+import { SyncState } from "./decorators/sync-state";
 
 @Injectable()
-export class SynchronizerStore extends Store {
+export class SyncStore extends Store {
 
     private pendingRequests$ = new BehaviorSubject<{ [stateMetadata: string]: Observable<any> }>({});
 
@@ -121,10 +121,10 @@ export class SynchronizerStore extends Store {
         if (!synchronizer.proxy) {
             if (options.clearStore) {
                 // TODO-Synchronize on this?
-                this.dispatch(new SynchronizerState.UpdateAction(propertyName, undefined)).subscribe();
+                this.dispatch(new SyncState.UpdateAction(propertyName, undefined)).subscribe();
             }
 
-            if (synchronizer.requiredProperties.some(requiredPropertyName => requiredPropertyName === propertyName)) {
+            if (synchronizer.requiredProperties && synchronizer.requiredProperties.some(requiredPropertyName => requiredPropertyName === propertyName)) {
                 return Observable.throw(`${errorPrefix} Synchronizer requires a reference to itself.`);
             }
         }
@@ -150,7 +150,7 @@ export class SynchronizerStore extends Store {
                     // Then fetch the propertyName
                     pendingRequest$ = pendingRequest$.pipe(
                         flatMap((requiredDetails: any) => synchronizer.read(requiredDetails, options)),
-                        flatMap((value: any) => this.dispatch(new SynchronizerState.UpdateAction(propertyName, value))), // Update the store value
+                        flatMap((value: any) => this.dispatch(new SyncState.UpdateAction(propertyName, value))), // Update the store value
                         catchError((error) => {
                             console.error(`Failed to request propertyName "${propertyName}": ${error}`);
                             this.clearMetadataUpdater(propertyName, pendingRequest$);

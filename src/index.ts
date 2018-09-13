@@ -1,4 +1,4 @@
+export * from "./decorators/sync-state";
 export * from "./module";
-export * from "./synchronizer-state";
-export * from "./synchronizer-store";
+export * from "./sync-store";
 export * from "./synchronizer";
