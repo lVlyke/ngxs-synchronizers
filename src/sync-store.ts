@@ -1,5 +1,5 @@
 import { Store } from "@ngxs/store";
-import { Observable, BehaviorSubject, zip, merge, of, forkJoin } from "rxjs";
+import { Observable, BehaviorSubject, zip, merge, of, forkJoin, throwError } from "rxjs";
 import { filter, map, distinctUntilChanged, flatMap, take, catchError, shareReplay } from "rxjs/operators";
 import { Injectable } from "@angular/core";
 import { Synchronizer } from "./synchronizer";
@@ -101,7 +101,7 @@ export class SyncStore extends Store {
                         return this.state().pipe(take(1));
                     }
                     else {
-                        return Observable.throw(`Error requiring fields: ${errors.join(", ")}`);
+                        return throwError(`Error requiring fields: ${errors.join(", ")}`);
                     }
                 })
             );
@@ -125,7 +125,7 @@ export class SyncStore extends Store {
             }
 
             if (synchronizer.requiredProperties && synchronizer.requiredProperties.some(requiredPropertyName => requiredPropertyName === propertyName)) {
-                return Observable.throw(`${errorPrefix} Synchronizer requires a reference to itself.`);
+                return throwError(`${errorPrefix} Synchronizer requires a reference to itself.`);
             }
         }
 
@@ -154,7 +154,7 @@ export class SyncStore extends Store {
                         catchError((error) => {
                             console.error(`Failed to request propertyName "${propertyName}": ${error}`);
                             this.clearMetadataUpdater(propertyName, pendingRequest$);
-                            return Observable.throw(error);
+                            return throwError(error);
                         }),
                         map(() => this.clearMetadataUpdater(propertyName, pendingRequest$)), // Remove the pending request
                         flatMap(() => this.state().pipe(take(1))), // Get the newly updated Session
@@ -186,7 +186,7 @@ export class SyncStore extends Store {
                     return this.state().pipe(take(1));
                 }
                 else {
-                    return Observable.throw(`Error updating fields: ${errors.join(", ")}`);
+                    return throwError(`Error updating fields: ${errors.join(", ")}`);
                 }
             })
         );
