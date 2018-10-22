@@ -1,13 +1,16 @@
 import { Synchronizer } from "./synchronizer";
+import { Injector } from "@angular/core";
 
 export class Synchronizers {
 
     public readonly collections: Synchronizers.Dictionary = {};
     
-    constructor(collectionBuilder: Synchronizers.BuilderDictionary) {
+    constructor(injector: Injector, collectionBuilder: Synchronizers.BuilderDictionary) {
         for (const stateName in collectionBuilder) {
             const synchronizers = collectionBuilder[stateName];
-            this.collections[stateName] = new Synchronizer.Collection<any>(...synchronizers);
+
+            // Inject each Synchronizer dependency into the collection
+            this.collections[stateName] = new Synchronizer.Collection<any>(...synchronizers.map(dep => injector.get(dep)));
         }
     }
 
@@ -34,6 +37,6 @@ export namespace Synchronizers {
     };
 
     export type BuilderDictionary = {
-        [stateName: string]: Synchronizer<any, any>[]
+        [stateName: string]: { new(...args: any[]): Synchronizer<any, any> }[]
     };
 }
