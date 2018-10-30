@@ -6,6 +6,7 @@
   "author": "Mychal Thompson <mychal.r.thompson@gmail.com>",
   "license": "MIT",
   "private": false,
+  "repository": "https://github.com/lVlyke/ngxs-synchronizers",
   "scripts": {
     "prebuild:js": "yarn test",
     "build:js": "node ./scripts/build.js",
