@@ -1,6 +1,6 @@
-import { NgModule, ModuleWithProviders, Injector } from "@angular/core";
-import { SyncStore } from "./sync-store";
+import { Injector, ModuleWithProviders, NgModule,  } from "@angular/core";
 import { Synchronizers } from "./sychronizers";
+import { SyncStore } from "./sync-store";
 
 @NgModule({
     providers: [
@@ -11,17 +11,17 @@ export class NgxsSyncModule {
 
     public static withSynchronizers(synchronizerCollectionBuilder: Synchronizers.BuilderDictionary): ModuleWithProviders {
 
-        function SYNCHRONIZERS_FACTORY(injector: Injector): Synchronizers {
-            return new Synchronizers(injector, synchronizerCollectionBuilder);
-        }
-
         return {
             ngModule: NgxsSyncModule,
             providers: [
                 {
+                    provide: "BuilderDictionary",
+                    useValue: synchronizerCollectionBuilder
+                },
+                {
+                    deps: [Injector, "BuilderDictionary"],
                     provide: Synchronizers,
-                    useFactory: SYNCHRONIZERS_FACTORY,
-                    deps: [Injector]
+                    useClass: Synchronizers
                 }
             ]
         };

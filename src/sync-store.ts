@@ -1,8 +1,8 @@
-import { Store } from "@ngxs/store";
 import { Injectable } from "@angular/core";
+import { Store } from "@ngxs/store";
+import { SyncState } from "./decorators/sync-state";
 import { StateSelector } from "./state-selector";
 import { Synchronizers } from "./sychronizers";
-import { SyncState } from "./decorators/sync-state";
 
 @Injectable()
 export class SyncStore extends Store {

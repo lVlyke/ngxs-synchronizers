@@ -24,7 +24,7 @@ export namespace Synchronizer {
 
         constructor(...args: Synchronizer<T, any>[]) {
             // Create the dictionary from the list of synchronizers
-            this._synchronizers = args.reduce((synchronizers: Dictionary<T>, synchronizer:  Synchronizer<T, any>) => {
+            this._synchronizers = args.reduce((synchronizers: Dictionary<T>, synchronizer: Synchronizer<T, any>) => {
                 return Object.assign(synchronizers, { [synchronizer.property]: synchronizer });
             }, {});
         }
@@ -42,8 +42,7 @@ export namespace Synchronizer {
 
             if (synchronizer) {
                 return synchronizer;
-            }
-            else {
+            } else {
                 throw new Error(`No Synchronizer defined for state property "${stateProperty}".`);
             }
         }

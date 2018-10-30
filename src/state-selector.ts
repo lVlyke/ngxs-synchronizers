@@ -1,8 +1,8 @@
-import { Observable, BehaviorSubject, zip, merge, of, forkJoin, throwError } from "rxjs";
-import { filter, map, distinctUntilChanged, mergeMap, take, catchError, shareReplay, tap } from "rxjs/operators";
-import { Synchronizer } from "./synchronizer";
-import { SyncState } from "./decorators/sync-state";
 import { Store } from "@ngxs/store";
+import { BehaviorSubject, forkJoin, merge, Observable, of, throwError, zip } from "rxjs";
+import { catchError, distinctUntilChanged, filter, map, mergeMap, shareReplay, take, tap } from "rxjs/operators";
+import { SyncState } from "./decorators/sync-state";
+import { Synchronizer } from "./synchronizer";
 
 export class StateSelector<T> {
 
@@ -72,8 +72,7 @@ export class StateSelector<T> {
             mergeMap(state => {
                 if (state[propertyName]) {
                     return of(state);
-                }
-                else {
+                } else {
                     return this.sync<OptsT>(propertyName, options);
                 }
             })
@@ -83,9 +82,8 @@ export class StateSelector<T> {
     public requireSome<OptsT = any>(fields: Array<keyof T>, options?: Synchronizer.Options<OptsT>): Observable<T> {
         if (fields.length === 0) {
             return this.state$.pipe(take(1));
-        }
-        else {
-            let errors: any[] = [];
+        } else {
+            const errors: any[] = [];
             return forkJoin(fields.map(propertyName => {
                 return this.require(propertyName, options).pipe(
                     catchError((error) => {
@@ -97,8 +95,7 @@ export class StateSelector<T> {
                 mergeMap(() => {
                     if (errors.length === 0) {
                         return this.state$.pipe(take(1));
-                    }
-                    else {
+                    } else {
                         return throwError(`Error requiring fields: ${errors.join(", ")}`);
                     }
                 })
@@ -135,13 +132,11 @@ export class StateSelector<T> {
                 if (pendingRequest$ && !options.clearStore) {
                     // Use the existing request if this value is currently being requested
                     return pendingRequest$;
-                }
-                else {
+                } else {
                     // First request any required fields needed to fetch the propertyName
                     if (synchronizer.proxy) {
                         pendingRequest$ = this.syncSome(synchronizer.requiredProperties, options);
-                    }
-                    else {
+                    } else {
                         pendingRequest$ = this.requireSome(synchronizer.requiredProperties || []);
                     }
 
@@ -174,7 +169,7 @@ export class StateSelector<T> {
         }
 
         // Update each required propertyName
-        let errors: any[] = [];
+        const errors: any[] = [];
         return forkJoin(requiredMetadataNames.map(name => this.sync<OptsT>(name, options).pipe(
             catchError((error) => {
                 errors.push(error);
@@ -183,8 +178,7 @@ export class StateSelector<T> {
                 mergeMap(() => {
                     if (errors.length === 0) {
                         return this.state$.pipe(take(1));
-                    }
-                    else {
+                    } else {
                         return throwError(`Error updating fields: ${errors.join(", ")}`);
                     }
                 })

@@ -1,4 +1,4 @@
-import { Action, StateContext, State } from "@ngxs/store";
+import { Action, State, StateContext } from "@ngxs/store";
 
 // From NGXS - Not exposed publicly
 export interface StoreOptions<T> {
@@ -14,7 +14,7 @@ export function SyncState<T>(options: StoreOptions<T>): ClassDecorator {
     return function(constructor: SyncState.Class) {
         // Add the update action function to the class
         constructor.prototype[UPDATE_ACTION_FN_NAME] = function<StateT, PropertyT>(context: StateContext<StateT>, { property, payload }: SyncState.UpdateAction<StateT, PropertyT>) {
-            context.patchState(<any>{ [property]: payload });
+            context.patchState({ [property]: payload } as any);
         };
 
         // Apply the @Action() decorator to the new function

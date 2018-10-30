@@ -1,6 +1,6 @@
 {
   "name": "ngxs-synchronizers",
-  "version": "0.0.2",
+  "version": "0.0.4",
   "description": "Utilities for keeping a local NGXS store synced with a remote store.",
   "main": "index.js",
   "author": "Mychal Thompson <mychal.r.thompson@gmail.com>",
@@ -31,6 +31,7 @@
     "jasmine": "^3.1.0",
     "rxjs": "6.2.0",
     "source-map-support": "^0.5.3",
+    "tslint": "^5.11.0",
     "typescript": "~3.1.1",
     "zone.js": "0.8.26"
   },

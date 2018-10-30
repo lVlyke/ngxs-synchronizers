@@ -1,10 +1,10 @@
-import { Synchronizer } from "./synchronizer";
 import { Injector } from "@angular/core";
+import { Synchronizer } from "./synchronizer";
 
 export class Synchronizers {
 
     public readonly collections: Synchronizers.Dictionary = {};
-    
+
     constructor(injector: Injector, collectionBuilder: Synchronizers.BuilderDictionary) {
         for (const stateName in collectionBuilder) {
             const synchronizers = collectionBuilder[stateName];
@@ -23,8 +23,7 @@ export class Synchronizers {
 
         if (collection) {
             return collection;
-        }
-        else {
+        } else {
             throw new Error(`No synchronizer collection defined for state name "${stateName}".`);
         }
     }
