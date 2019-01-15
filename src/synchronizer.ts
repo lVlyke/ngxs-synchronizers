@@ -5,7 +5,7 @@ export interface Synchronizer<T, PropKey extends keyof T, ParamsT = any> {
     requiredProperties?: Array<keyof T>;
     proxy?: boolean;
 
-    read(requiredDetails?: Partial<T>, options?: Synchronizer.Options<ParamsT>): Observable<T[PropKey]>;
+    read(requiredDetails?: Partial<T>, options?: Synchronizer.NamedOptions<ParamsT>): Observable<T[PropKey]>;
 }
 
 export namespace Synchronizer {
@@ -19,7 +19,18 @@ export namespace Synchronizer {
         clearStore?: boolean;
     }
 
-    export class Collection<T> {
+    export interface NamedOptions<ParamsT = any> extends Options<ParamsT> {
+        propertyName: string | number | symbol;
+    }
+
+    export interface ICollection<T> {
+        synchronizers: Dictionary<T>;
+
+        setSynchronizer<PropKey extends keyof T, ParamsT = any>(stateProperty: PropKey, synchronizer: Synchronizer<T, PropKey, ParamsT>): void;
+        getSynchronizer<PropKey extends keyof T, ParamsT = any>(stateProperty: PropKey): Synchronizer<T, PropKey, ParamsT>;
+    }
+
+    export class Collection<T> implements ICollection<T> {
         protected _synchronizers: Dictionary<T> = {};
 
         constructor(...args: Synchronizer<T, any>[]) {
@@ -45,6 +56,23 @@ export namespace Synchronizer {
             } else {
                 throw new Error(`No Synchronizer defined for state property "${stateProperty}".`);
             }
+        }
+    }
+
+    export class SingletonCollection<T> implements ICollection<T> {
+
+        constructor(private synchronizer: Synchronizer<T, any>) {}
+
+        public get synchronizers(): Dictionary<T> {
+            return {};
+        }
+
+        public setSynchronizer<PropKey extends keyof T, ParamsT = any>(_stateProperty: PropKey, _synchronizer: Synchronizer<T, PropKey, ParamsT>): void {
+            // Noop
+        }
+
+        public getSynchronizer<PropKey extends keyof T, ParamsT = any>(_stateProperty: PropKey): Synchronizer<T, PropKey, ParamsT> {
+            return this.synchronizer;
         }
     }
 }

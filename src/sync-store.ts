@@ -13,11 +13,11 @@ export class SyncStore extends Store {
         Object.assign(this, store);
     }
 
-    public state<T>(syncState: SyncState.Class): StateSelector<T> {
+    public state<T>(syncState: SyncState.Class, ...parentStates: SyncState.Class[]): StateSelector<T> {
         return new StateSelector<T>(
             this,
             syncState,
-            this.select(state => state[syncState.stateName]),
+            this.select(state => [...parentStates, syncState].reduce((newState, curState) => newState[curState.stateName], state)),
             this.synchronizers.getCollection<T>(syncState.stateName)
         );
     }

@@ -9,17 +9,22 @@ export class Synchronizers {
         for (const stateName in collectionBuilder) {
             const synchronizers = collectionBuilder[stateName];
 
-            // Inject each Synchronizer dependency into the collection
-            this.collections[stateName] = new Synchronizer.Collection<any>(...synchronizers.map(dep => injector.get(dep)));
+            if (Array.isArray(synchronizers)) {
+                // Inject each Synchronizer dependency into the collection
+                this.collections[stateName] = new Synchronizer.Collection<any>(...synchronizers.map(dep => injector.get(dep)));
+            } else {
+                // Inject the single Synchronizer into a SingletonCollection
+                this.collections[stateName] = new Synchronizer.SingletonCollection<any>(injector.get(synchronizers));
+            }
         }
     }
 
-    public setCollection<T>(stateName: string, collection: Synchronizer.Collection<T>) {
+    public setCollection<T>(stateName: string, collection: Synchronizer.ICollection<T>) {
         this.collections[stateName] = collection;
     }
 
-    public getCollection<T>(stateName: string): Synchronizer.Collection<T> {
-        const collection = this.collections[stateName] as Synchronizer.Collection<T>;
+    public getCollection<T>(stateName: string): Synchronizer.ICollection<T> {
+        const collection = this.collections[stateName] as Synchronizer.ICollection<T>;
 
         if (collection) {
             return collection;
@@ -31,11 +36,13 @@ export class Synchronizers {
 
 export namespace Synchronizers {
 
+    export type Creator = new(...args: any[]) => Synchronizer<any, any>;
+
     export type Dictionary = {
-        [stateName: string]: Synchronizer.Collection<any>
+        [stateName: string]: Synchronizer.ICollection<any>
     };
 
     export type BuilderDictionary = {
-        [stateName: string]: { new(...args: any[]): Synchronizer<any, any> }[]
+        [stateName: string]: Creator[] | Creator
     };
 }

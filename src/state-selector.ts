@@ -12,7 +12,7 @@ export class StateSelector<T> {
         private store: Store,
         private stateClass: SyncState.Class,
         private state$: Observable<T>,
-        private synchronizers: Synchronizer.Collection<T>
+        private synchronizers: Synchronizer.ICollection<T>
     ) {}
 
     public dispatch<MetaKey extends keyof T>(propertyName: MetaKey, value: T[MetaKey]): Observable<T> {
@@ -142,7 +142,7 @@ export class StateSelector<T> {
 
                     // Then fetch the propertyName
                     pendingRequest$ = pendingRequest$.pipe(
-                        mergeMap((requiredDetails: any) => synchronizer.read(requiredDetails, options)),
+                        mergeMap((requiredDetails: any) => synchronizer.read(requiredDetails, { propertyName, ...options })),
                         mergeMap((value: any) => this.dispatch(propertyName, value)), // Update the store value
                         catchError((error) => {
                             console.error(`Failed to request propertyName "${propertyName}": ${error}`);
