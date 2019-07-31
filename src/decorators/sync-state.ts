@@ -20,8 +20,7 @@ export function SyncState<T>(options: StoreOptions<T>): ClassDecorator {
         // Apply the @Action() decorator to the new function
         Action(SyncState.UpdateAction.For(constructor))(
             constructor.prototype,
-            UPDATE_ACTION_FN_NAME,
-            Object.getOwnPropertyDescriptor(constructor.prototype, UPDATE_ACTION_FN_NAME)
+            UPDATE_ACTION_FN_NAME
         );
 
         // Apply the @State() decorator to the class
@@ -42,7 +41,11 @@ export namespace SyncState {
 
     export namespace UpdateAction {
 
-        export type Creator<StateT, PropertyT> = new(...args: any[]) => UpdateAction<StateT, PropertyT>;
+        export interface Creator<StateT, PropertyT> {
+            type: string;
+
+            new(...args: any[]): UpdateAction<StateT, PropertyT>;
+        }
 
         const updateActions = new Map<Class, Creator<any, any>>();
 

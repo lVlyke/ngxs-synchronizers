@@ -8,7 +8,7 @@ import { Synchronizers } from "./sychronizers";
 export class SyncStore extends Store {
 
     constructor(private synchronizers: Synchronizers, store: Store) {
-        super(null, null, null);
+        super(null, null, null, null, null);
 
         Object.assign(this, store);
     }
