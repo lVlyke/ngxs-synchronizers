@@ -4,13 +4,30 @@ import { SyncState } from "./decorators/sync-state";
 import { StateSelector } from "./state-selector";
 import { Synchronizers } from "./sychronizers";
 
+interface InternalStore {
+    _stateStream: any;
+    _internalStateOperations: any;
+    _config: any;
+    _internalExecutionStrategy: any;
+}
+
 @Injectable()
 export class SyncStore extends Store {
 
-    constructor(private synchronizers: Synchronizers, store: Store) {
-        super(null, null, null, null, null);
+    private synchronizers: Synchronizers;
 
-        Object.assign(this, store);
+    constructor(synchronizers: Synchronizers, store: Store) {
+        const internalStore: InternalStore = store as any;
+
+        super(
+            internalStore._stateStream,
+            internalStore._internalStateOperations,
+            internalStore._config,
+            internalStore._internalExecutionStrategy,
+            undefined
+        );
+
+        this.synchronizers = synchronizers;
     }
 
     public state<T>(syncState: SyncState.Class, ...parentStates: SyncState.Class[]): StateSelector<T> {
