@@ -2,7 +2,6 @@
   "name": "ngxs-synchronizers",
   "version": "0.1.0",
   "description": "Utilities for keeping a local NGXS store synced with a remote store.",
-  "main": "index.js",
   "author": "Mychal Thompson <mychal.r.thompson@gmail.com>",
   "license": "MIT",
   "private": false,
@@ -24,17 +23,25 @@
     "@angular/core": "8.1.2",
     "@ngxs/store": "^3.5.0",
     "@types/jasmine": "^2.8.6",
+    "@types/node": "^12.6.9",
     "@types/reflect-metadata": "^0.0.5",
     "detest-bdd": "^1.1.0",
     "fs-extra": "^5.0.0",
     "istanbul": "^0.4.5",
     "istanbul-cobertura-badger": "^1.3.1",
     "jasmine": "^3.1.0",
+    "ng-packagr": "^5.4.3",
     "rxjs": "~6.5.2",
     "source-map-support": "^0.5.3",
+    "tslib": "^1.10.0",
     "tslint": "^5.11.0",
     "typescript": "~3.4.5",
     "zone.js": "^0.9.1"
   },
-  "dependencies": {}
+  "dependencies": {},
+  "ngPackage": {
+    "lib": {
+      "entryFile": "./src/index.ts"
+    }
+  }
 }
