@@ -1,5 +1,5 @@
 import { Injector } from "@angular/core";
-import { Synchronizer } from "./synchronizer";
+import { Synchronizer, PropertySynchronizer, CollectionSynchronizer } from "./synchronizer";
 
 export class Synchronizers {
 
@@ -11,10 +11,10 @@ export class Synchronizers {
 
             if (Array.isArray(synchronizers)) {
                 // Inject each Synchronizer dependency into the collection
-                this.collections[stateName] = new Synchronizer.Collection<any>(...synchronizers.map(dep => injector.get(dep)));
+                this.collections[stateName] = new PropertySynchronizer.Collection<any>(...synchronizers.map(dep => injector.get(dep)));
             } else {
                 // Inject the single Synchronizer into a SingletonCollection
-                this.collections[stateName] = new Synchronizer.SingletonCollection<any>(injector.get(synchronizers));
+                this.collections[stateName] = new CollectionSynchronizer.Collection<any>(injector.get(synchronizers));
             }
         }
     }
@@ -36,13 +36,13 @@ export class Synchronizers {
 
 export namespace Synchronizers {
 
-    export type Creator = new(...args: any[]) => Synchronizer<any, any>;
+    export type Creator<SynchronizerT> = new(...args: any[]) => SynchronizerT;
 
     export type Dictionary = {
         [stateName: string]: Synchronizer.ICollection<any>
     };
 
     export type BuilderDictionary = {
-        [stateName: string]: Creator[] | Creator
+        [stateName: string]: Creator<PropertySynchronizer<any, any>>[] | Creator<CollectionSynchronizer<any>>;
     };
 }

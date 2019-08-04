@@ -1,41 +1,82 @@
 import { Observable } from "rxjs";
 
-export interface Synchronizer<T, PropKey extends keyof T, ParamsT = any> {
-    property: PropKey;
+export interface Synchronizer<
+    T,
+    PropKey extends keyof T,
+    ParamsT = any
+> {
     requiredProperties?: Array<keyof T>;
     proxy?: boolean;
 
-    read(requiredDetails?: Partial<T>, options?: Synchronizer.NamedOptions<ParamsT>): Observable<T[PropKey]>;
+    read(
+        requiredDetails?: Partial<T>,
+        options?: Synchronizer.ReadOptions<T, PropKey, ParamsT>
+    ): Observable<T[PropKey]>;
+}
+
+export interface PropertySynchronizer<
+    T,
+    PropKey extends keyof T,
+    ParamsT = any
+> extends Synchronizer<T, PropKey, ParamsT>
+{
+    property: PropKey;
+
+    read(
+        requiredDetails?: Partial<T>,
+        options?: PropertySynchronizer.ReadOptions<T, PropKey, ParamsT>
+    ): Observable<T[PropKey]>;
+}
+
+export interface CollectionSynchronizer<
+    T,
+    ParamsT = any
+> extends Synchronizer<T, keyof T, ParamsT> {
+    read(
+        requiredDetails?: Partial<T>,
+        options?: CollectionSynchronizer.ReadOptions<T, ParamsT>
+    ): Observable<T[keyof T]>;
 }
 
 export namespace Synchronizer {
-
-    export type Dictionary<T> = {
-        [P in keyof T]?: Synchronizer<T, P>;
-    };
 
     export interface Options<ParamsT = any> {
         requestParams?: ParamsT;
         clearStore?: boolean;
     }
 
-    export interface NamedOptions<ParamsT = any> extends Options<ParamsT> {
-        propertyName: string | number | symbol;
+    export interface ReadOptions<
+        T,
+        PropKey extends keyof T,
+        ParamsT = any
+    > extends Options<ParamsT> {
+        propertyName: PropKey;
     }
 
     export interface ICollection<T> {
-        synchronizers: Dictionary<T>;
-
-        setSynchronizer<PropKey extends keyof T, ParamsT = any>(stateProperty: PropKey, synchronizer: Synchronizer<T, PropKey, ParamsT>): void;
-        getSynchronizer<PropKey extends keyof T, ParamsT = any>(stateProperty: PropKey): Synchronizer<T, PropKey, ParamsT>;
+        setSynchronizer<ParamsT = any>(stateProperty: keyof T, synchronizer: Synchronizer<T, typeof stateProperty, ParamsT>): void;
+        getSynchronizer<ParamsT = any>(stateProperty: keyof T): Synchronizer<T, typeof stateProperty, ParamsT>;
     }
+}
 
-    export class Collection<T> implements ICollection<T> {
+export namespace PropertySynchronizer {
+
+    export type Dictionary<T> = {
+        [P in keyof T]?: PropertySynchronizer<T, P>;
+    };
+
+    export type ReadOptions<
+        T = any,
+        PropKey extends keyof T = keyof T,
+        ParamsT = any
+    > = Synchronizer.ReadOptions<T, PropKey, ParamsT>;
+
+    export class Collection<T> implements Synchronizer.ICollection<T> {
         protected _synchronizers: Dictionary<T> = {};
 
-        constructor(...args: Synchronizer<T, any>[]) {
+        constructor(...args: PropertySynchronizer<T, any>[]) {
             // Create the dictionary from the list of synchronizers
-            this._synchronizers = args.reduce((synchronizers: Dictionary<T>, synchronizer: Synchronizer<T, any>) => {
+            this._synchronizers = args.reduce((synchronizers: Dictionary<T>, synchronizer: PropertySynchronizer<T, any>) => {
                 return Object.assign(synchronizers, { [synchronizer.property]: synchronizer });
             }, {});
         }
@@ -44,12 +85,12 @@ export namespace Synchronizer {
             return this._synchronizers;
         }
 
-        public setSynchronizer<PropKey extends keyof T, ParamsT = any>(stateProperty: PropKey, synchronizer: Synchronizer<T, PropKey, ParamsT>) {
+        public setSynchronizer<ParamsT = any>(stateProperty: keyof T, synchronizer: PropertySynchronizer<T, typeof stateProperty, ParamsT>) {
             this._synchronizers[stateProperty] = synchronizer;
         }
 
-        public getSynchronizer<PropKey extends keyof T, ParamsT = any>(stateProperty: PropKey): Synchronizer<T, PropKey, ParamsT> {
-            const synchronizer = this._synchronizers[stateProperty] as Synchronizer<T, PropKey, ParamsT>;
+        public getSynchronizer<ParamsT = any>(stateProperty: keyof T): PropertySynchronizer<T, typeof stateProperty, ParamsT> {
+            const synchronizer = this._synchronizers[stateProperty] as PropertySynchronizer<T, typeof stateProperty, ParamsT>;
 
             if (synchronizer) {
                 return synchronizer;
@@ -58,20 +99,30 @@ export namespace Synchronizer {
             }
         }
     }
+}
 
-    export class SingletonCollection<T> implements ICollection<T> {
+export namespace CollectionSynchronizer {
 
-        constructor(private synchronizer: Synchronizer<T, any>) {}
+    export type Dictionary<T> = CollectionSynchronizer<T>;
+
+    export type ReadOptions<
+        T = any,
+        ParamsT = any
+    > = Synchronizer.ReadOptions<T, keyof T, ParamsT>;
+
+    export class Collection<T> implements Synchronizer.ICollection<T> {
+
+        constructor(private synchronizer: CollectionSynchronizer<T>) {}
 
         public get synchronizers(): Dictionary<T> {
-            return {};
+            return this.synchronizer;
         }
 
-        public setSynchronizer<PropKey extends keyof T, ParamsT = any>(_stateProperty: PropKey, _synchronizer: Synchronizer<T, PropKey, ParamsT>): void {
-            // Noop
+        public setSynchronizer<ParamsT = any>(_stateProperty: keyof T, synchronizer: CollectionSynchronizer<T, ParamsT>): void {
+            this.synchronizer = synchronizer;
         }
 
-        public getSynchronizer<PropKey extends keyof T, ParamsT = any>(_stateProperty: PropKey): Synchronizer<T, PropKey, ParamsT> {
+        public getSynchronizer<ParamsT = any>(_stateProperty: keyof T): CollectionSynchronizer<T, ParamsT> {
             return this.synchronizer;
         }
     }

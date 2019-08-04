@@ -4,9 +4,13 @@ import { catchError, distinctUntilChanged, filter, map, mergeMap, shareReplay, t
 import { SyncState } from "./decorators/sync-state";
 import { Synchronizer } from "./synchronizer";
 
+type PendingStateRequestDictionary<T> = {
+    [P in keyof T]?: Observable<T>;
+};
+
 export class StateSelector<T> {
 
-    private readonly pendingRequests$ = new BehaviorSubject<{ [P in keyof T]?: Observable<any> }>({});
+    private readonly pendingRequests$ = new BehaviorSubject<PendingStateRequestDictionary<T>>({});
 
     constructor(
         private store: Store,
@@ -15,58 +19,73 @@ export class StateSelector<T> {
         private synchronizers: Synchronizer.ICollection<T>
     ) {}
 
-    public dispatch<MetaKey extends keyof T>(propertyName: MetaKey, value: T[MetaKey]): Observable<T> {
-        const updateAction = SyncState.UpdateAction.For<T, T[MetaKey]>(this.stateClass);
+    public dispatch(propertyName: keyof T, value: T[typeof propertyName]): Observable<T> {
+        const updateAction = SyncState.UpdateAction.For<T, T[typeof propertyName]>(this.stateClass);
 
         return this.store.dispatch(new updateAction(propertyName, value));
     }
 
-    public metadata<MetaKey extends keyof T>(propertyName: MetaKey): Observable<T[MetaKey]> {
+    public property(propertyName: keyof T): Observable<T[typeof propertyName]> {
         return this.state$.pipe(map((state: T) => state[propertyName]));
     }
 
-    public definedMetadata<MetaKey extends keyof T>(propertyName: MetaKey): Observable<T[MetaKey]> {
-        return this.metadata<MetaKey>(propertyName).pipe(filter(Boolean));
+    public definedProperty(propertyName: keyof T): Observable<T[typeof propertyName]> {
+        return this.property(propertyName).pipe(filter<T[typeof propertyName]>(Boolean));
     }
 
-    public isSyncingMetadata(propertyName: keyof T): Observable<boolean> {
-        return this.getMetadataUpdater(propertyName).pipe(
+    public isSyncingProperty(propertyName: keyof T): Observable<boolean> {
+        return this.getPropertyUpdater(propertyName).pipe(
             map(Boolean),
             distinctUntilChanged()
         );
     }
 
-    public onMetadataSyncing(propertyName: keyof T): Observable<keyof T> {
-        return this.isSyncingMetadata(propertyName).pipe(
+    public onPropertySyncing(propertyName: keyof T): Observable<keyof T> {
+        return this.isSyncingProperty(propertyName).pipe(
             filter(Boolean),
             map(() => propertyName),
         );
     }
 
-    public onMetadataSynced(propertyName: keyof T): Observable<keyof T> {
-        return this.isSyncingMetadata(propertyName).pipe(
+    public onPropertySynced(propertyName: keyof T): Observable<keyof T> {
+        return this.isSyncingProperty(propertyName).pipe(
             filter(updating => !updating),
             map(() => propertyName)
         );
     }
 
-    public onAllMetadataSyncing(...propertyNames: Array<keyof T>): Observable<Array<keyof T>> {
-        return zip(...propertyNames.map(propertyName => this.onMetadataSyncing(propertyName)));
+    public onEveryPropertySyncing(...propertyNames: Array<keyof T>): Observable<Array<keyof T>> {
+        return zip(...propertyNames.map(propertyName => this.onPropertySyncing(propertyName)));
     }
 
-    public onAllMetadataSynced(...propertyNames: Array<keyof T>): Observable<Array<keyof T>> {
-        return zip(...propertyNames.map(propertyName => this.onMetadataSynced(propertyName)));
+    public onEveryPropertySynced(...propertyNames: Array<keyof T>): Observable<Array<keyof T>> {
+        return zip(...propertyNames.map(propertyName => this.onPropertySynced(propertyName)));
     }
 
-    public onAnyMetadataSyncing(...propertyNames: Array<keyof T>): Observable<keyof T> {
-        return merge(...propertyNames.map(propertyName => this.onMetadataSyncing(propertyName)));
+    public onSomePropertySyncing(...propertyNames: Array<keyof T>): Observable<keyof T> {
+        return merge(...propertyNames.map(propertyName => this.onPropertySyncing(propertyName)));
     }
 
-    public onAnyMetadataSynced(propertyNames: Array<keyof T>): Observable<keyof T> {
-        return merge(...propertyNames.map(propertyName => this.onMetadataSynced(propertyName)));
+    public onSomePropertySynced(...propertyNames: Array<keyof T>): Observable<keyof T> {
+        return merge(...propertyNames.map(propertyName => this.onPropertySynced(propertyName)));
     }
 
-    public require<OptsT = any>(propertyName: keyof T, options?: Synchronizer.Options<OptsT>): Observable<T> {
+    public require<OptsT = any>(propertyName: keyof T, options?: Synchronizer.Options<OptsT>): Observable<T>;
+    public require<OptsT = any>(propertyNames: Array<keyof T>, options?: Synchronizer.Options<OptsT>): Observable<T>;
+
+    public require<OptsT = any>(propertyNames: keyof T | Array<keyof T>, options?: Synchronizer.Options<OptsT>): Observable<T> {
+        if (Array.isArray(propertyNames)) {
+            return this.requireAll(propertyNames, options);
+        } else {
+            return this.requireOne(propertyNames, options);
+        }
+    }
+
+    public requireProperty<OptsT = any>(propertyName: keyof T, options?: Synchronizer.Options<OptsT>): Observable<T[typeof propertyName]> {
+        return this.requireOne<OptsT>(propertyName, options).pipe(map(session => session[propertyName]));
+    }
+
+    private requireOne<OptsT = any>(propertyName: keyof T, options?: Synchronizer.Options<OptsT>): Observable<T> {
         return this.state$.pipe(
             take(1),
             mergeMap(state => {
@@ -79,13 +98,13 @@ export class StateSelector<T> {
         );
     }
 
-    public requireSome<OptsT = any>(fields: Array<keyof T>, options?: Synchronizer.Options<OptsT>): Observable<T> {
-        if (fields.length === 0) {
+    private requireAll<OptsT = any>(propertyNames: Array<keyof T>, options?: Synchronizer.Options<OptsT>): Observable<T> {
+        if (propertyNames.length === 0) {
             return this.state$.pipe(take(1));
         } else {
             const errors: any[] = [];
-            return forkJoin(fields.map(propertyName => {
-                return this.require(propertyName, options).pipe(
+            return forkJoin(propertyNames.map(propertyName => {
+                return this.requireOne(propertyName, options).pipe(
                     catchError((error) => {
                         errors.push(error);
                         return of(undefined);
@@ -96,18 +115,29 @@ export class StateSelector<T> {
                     if (errors.length === 0) {
                         return this.state$.pipe(take(1));
                     } else {
-                        return throwError(`Error requiring fields: ${errors.join(", ")}`);
+                        return throwError(`Error requiring properties: ${errors.join(", ")}`);
                     }
                 })
             );
         }
     }
 
-    public requireMetadata<MetaKey extends keyof T, OptsT = any>(propertyName: MetaKey, options?: Synchronizer.Options<OptsT>): Observable<T[MetaKey]> {
-        return this.require<OptsT>(propertyName, options).pipe(map(session => session[propertyName]));
+    public sync<OptsT = any>(propertyName: keyof T, options?: Synchronizer.Options<OptsT>): Observable<T>;
+    public sync<OptsT = any>(propertyNames: Array<keyof T>, options?: Synchronizer.Options<OptsT>): Observable<T>;
+
+    public sync<OptsT = any>(propertyNames: keyof T | Array<keyof T>, options?: Synchronizer.Options<OptsT>): Observable<T> {
+        if (Array.isArray(propertyNames)) {
+            return this.syncAll(propertyNames, options);
+        } else {
+            return this.syncOne(propertyNames, options);
+        }
     }
 
-    public sync<OptsT = any>(propertyName: keyof T, options?: Synchronizer.Options<OptsT>): Observable<T> {
+    public syncProperty<OptsT = any>(propertyName: keyof T, options?: Synchronizer.Options<OptsT>): Observable<T[typeof propertyName]> {
+        return this.syncOne<OptsT>(propertyName, options).pipe(map(session => session[propertyName]));
+    }
+
+    private syncOne<OptsT = any>(propertyName: keyof T, options?: Synchronizer.Options<OptsT>): Observable<T> {
         options = options || {};
         const errorPrefix = "Error: Cannot update session info:";
         const synchronizer = this.synchronizers.getSynchronizer(propertyName);
@@ -135,9 +165,9 @@ export class StateSelector<T> {
                 } else {
                     // First request any required fields needed to fetch the propertyName
                     if (synchronizer.proxy) {
-                        pendingRequest$ = this.syncSome(synchronizer.requiredProperties, options);
+                        pendingRequest$ = this.syncAll(synchronizer.requiredProperties, options);
                     } else {
-                        pendingRequest$ = this.requireSome(synchronizer.requiredProperties || []);
+                        pendingRequest$ = this.requireAll(synchronizer.requiredProperties || []);
                     }
 
                     // Then fetch the propertyName
@@ -146,10 +176,10 @@ export class StateSelector<T> {
                         mergeMap((value: any) => this.dispatch(propertyName, value)), // Update the store value
                         catchError((error) => {
                             console.error(`Failed to request propertyName "${propertyName}": ${error}`);
-                            this.clearMetadataUpdater(propertyName, pendingRequest$);
+                            this.clearPropertyUpdater(propertyName, pendingRequest$);
                             return throwError(error);
                         }),
-                        tap(() => this.clearMetadataUpdater(propertyName, pendingRequest$)), // Remove the pending request
+                        tap(() => this.clearPropertyUpdater(propertyName, pendingRequest$)), // Remove the pending request
                         mergeMap(() => this.state$.pipe(take(1))), // Get the newly updated Session
                         shareReplay(1)
                     );
@@ -161,16 +191,16 @@ export class StateSelector<T> {
         );
     }
 
-    public syncSome<OptsT = any>(requiredMetadataNames: Array<keyof T>, options?: Synchronizer.Options<OptsT>): Observable<T> {
+    private syncAll<OptsT = any>(propertyNames: Array<keyof T>, options?: Synchronizer.Options<OptsT>): Observable<T> {
         options = options || {};
 
-        if (requiredMetadataNames.length === 0) {
+        if (propertyNames.length === 0) {
             return this.state$.pipe(take(1));
         }
 
         // Update each required propertyName
         const errors: any[] = [];
-        return forkJoin(requiredMetadataNames.map(name => this.sync<OptsT>(name, options).pipe(
+        return forkJoin(propertyNames.map(name => this.sync<OptsT>(name, options).pipe(
             catchError((error) => {
                 errors.push(error);
                 return of(undefined);
@@ -179,21 +209,17 @@ export class StateSelector<T> {
                     if (errors.length === 0) {
                         return this.state$.pipe(take(1));
                     } else {
-                        return throwError(`Error updating fields: ${errors.join(", ")}`);
+                        return throwError(`Error updating properties: ${errors.join(", ")}`);
                     }
                 })
             );
     }
 
-    public syncMetadata<MetaKey extends keyof T, OptsT = any>(propertyName: MetaKey, options?: Synchronizer.Options<OptsT>): Observable<T[MetaKey]> {
-        return this.sync<OptsT>(propertyName, options).pipe(map(session => session[propertyName]));
-    }
-
-    private getMetadataUpdater(propertyName: keyof T): Observable<Observable<any> | undefined> {
+    private getPropertyUpdater(propertyName: keyof T): Observable<Observable<T> | undefined> {
         return this.pendingRequests$.pipe(map(pendingRequests => pendingRequests[propertyName]));
     }
 
-    private clearMetadataUpdater(propertyName: keyof T, request: Observable<any>) {
+    private clearPropertyUpdater(propertyName: keyof T, request: Observable<T>): void {
         this.pendingRequests$.pipe(
             take(1),
             filter(pendingRequests => pendingRequests[propertyName] === request)

@@ -1,6 +1,6 @@
-import { Synchronizer } from "./../src/synchronizer";
+import { PropertySynchronizer } from "./../src/synchronizer";
 
 
 describe("Test", () => {
-    it("works", () => expect(Synchronizer).toBeTruthy());
+    it("works", () => expect(PropertySynchronizer).toBeTruthy());
 });
