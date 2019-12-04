@@ -1,5 +1,5 @@
 import { Injector } from "@angular/core";
-import { Synchronizer, PropertySynchronizer, CollectionSynchronizer } from "./synchronizer";
+import { CollectionSynchronizer, PropertySynchronizer, Synchronizer } from "./synchronizer";
 
 export class Synchronizers {
 

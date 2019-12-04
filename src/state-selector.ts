@@ -70,9 +70,6 @@ export class StateSelector<T> {
         return merge(...propertyNames.map(propertyName => this.onPropertySynced(propertyName)));
     }
 
-    public require<OptsT = any>(propertyName: keyof T, options?: Synchronizer.Options<OptsT>): Observable<T>;
-    public require<OptsT = any>(propertyNames: Array<keyof T>, options?: Synchronizer.Options<OptsT>): Observable<T>;
-
     public require<OptsT = any>(propertyNames: keyof T | Array<keyof T>, options?: Synchronizer.Options<OptsT>): Observable<T> {
         if (Array.isArray(propertyNames)) {
             return this.requireAll(propertyNames, options);
@@ -83,6 +80,18 @@ export class StateSelector<T> {
 
     public requireProperty<OptsT = any>(propertyName: keyof T, options?: Synchronizer.Options<OptsT>): Observable<T[typeof propertyName]> {
         return this.requireOne<OptsT>(propertyName, options).pipe(map(session => session[propertyName]));
+    }
+
+    public sync<OptsT = any>(propertyNames: keyof T | Array<keyof T>, options?: Synchronizer.Options<OptsT>): Observable<T> {
+        if (Array.isArray(propertyNames)) {
+            return this.syncAll(propertyNames, options);
+        } else {
+            return this.syncOne(propertyNames, options);
+        }
+    }
+
+    public syncProperty<OptsT = any>(propertyName: keyof T, options?: Synchronizer.Options<OptsT>): Observable<T[typeof propertyName]> {
+        return this.syncOne<OptsT>(propertyName, options).pipe(map(session => session[propertyName]));
     }
 
     private requireOne<OptsT = any>(propertyName: keyof T, options?: Synchronizer.Options<OptsT>): Observable<T> {
@@ -120,21 +129,6 @@ export class StateSelector<T> {
                 })
             );
         }
-    }
-
-    public sync<OptsT = any>(propertyName: keyof T, options?: Synchronizer.Options<OptsT>): Observable<T>;
-    public sync<OptsT = any>(propertyNames: Array<keyof T>, options?: Synchronizer.Options<OptsT>): Observable<T>;
-
-    public sync<OptsT = any>(propertyNames: keyof T | Array<keyof T>, options?: Synchronizer.Options<OptsT>): Observable<T> {
-        if (Array.isArray(propertyNames)) {
-            return this.syncAll(propertyNames, options);
-        } else {
-            return this.syncOne(propertyNames, options);
-        }
-    }
-
-    public syncProperty<OptsT = any>(propertyName: keyof T, options?: Synchronizer.Options<OptsT>): Observable<T[typeof propertyName]> {
-        return this.syncOne<OptsT>(propertyName, options).pipe(map(session => session[propertyName]));
     }
 
     private syncOne<OptsT = any>(propertyName: keyof T, options?: Synchronizer.Options<OptsT>): Observable<T> {

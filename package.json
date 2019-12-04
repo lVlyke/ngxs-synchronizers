@@ -26,7 +26,8 @@
     "prebuild:js": "yarn test",
     "build:js": "node ./scripts/build.js",
     "pretest": "node ./scripts/pretest.js",
-    "test": "node ./scripts/test.js"
+    "test": "node ./scripts/test.js",
+    "lint": "./node_modules/.bin/tslint --project ."
   },
   "peerDependencies": {
     "@angular/core": "6.x.x - 8.x.x",
