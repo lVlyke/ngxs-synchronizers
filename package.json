@@ -1,6 +1,6 @@
 {
   "name": "ngxs-synchronizers",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Easily keep your app's local state synchronized with your backend, databases and more! ngxs-synchronizers simplifies synchronizing your NGXS-based application state with external data sources.",
   "author": "Mychal Thompson <mychal.r.thompson@gmail.com>",
   "license": "MIT",

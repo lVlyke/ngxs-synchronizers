@@ -1,6 +1,6 @@
 import { Store } from "@ngxs/store";
 import { BehaviorSubject, forkJoin, merge, Observable, of, throwError, zip } from "rxjs";
-import { catchError, distinctUntilChanged, filter, map, mergeMap, shareReplay, take, tap } from "rxjs/operators";
+import { catchError, distinctUntilChanged, filter, map, mergeMap, publishReplay, refCount, take, tap } from "rxjs/operators";
 import { SyncState } from "./decorators/sync-state";
 import { Synchronizer } from "./synchronizer";
 
@@ -175,7 +175,8 @@ export class StateSelector<T> {
                         }),
                         tap(() => this.clearPropertyUpdater(propertyName, pendingRequest$)), // Remove the pending request
                         mergeMap(() => this.state$.pipe(take(1))), // Get the newly updated Session
-                        shareReplay(1)
+                        publishReplay(1),
+                        refCount()
                     );
 
                     this.pendingRequests$.next(Object.assign(pendingRequests, { [propertyName]: pendingRequest$ }));
