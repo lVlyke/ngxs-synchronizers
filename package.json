@@ -23,7 +23,7 @@
     "ngx"
   ],
   "scripts": {
-    "prebuild:js": "yarn test",
+    "prebuild:js": "yarn test && yarn lint",
     "build:js": "node ./scripts/build.js",
     "pretest": "node ./scripts/pretest.js",
     "test": "node ./scripts/test.js",
