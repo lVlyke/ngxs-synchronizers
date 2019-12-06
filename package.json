@@ -1,6 +1,6 @@
 {
   "name": "ngxs-synchronizers",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Easily keep your app's local state synchronized with your backend, databases and more! ngxs-synchronizers simplifies synchronizing your NGXS-based application state with external data sources.",
   "author": "Mychal Thompson <mychal.r.thompson@gmail.com>",
   "license": "MIT",
@@ -23,10 +23,11 @@
     "ngx"
   ],
   "scripts": {
-    "prebuild:js": "yarn test",
+    "prebuild:js": "yarn test && yarn lint",
     "build:js": "node ./scripts/build.js",
     "pretest": "node ./scripts/pretest.js",
-    "test": "node ./scripts/test.js"
+    "test": "node ./scripts/test.js",
+    "lint": "./node_modules/.bin/tslint --project ."
   },
   "peerDependencies": {
     "@angular/core": "6.x.x - 8.x.x",

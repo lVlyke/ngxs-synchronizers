@@ -18,8 +18,7 @@ export interface PropertySynchronizer<
     T,
     PropKey extends keyof T,
     ParamsT = any
-> extends Synchronizer<T, PropKey, ParamsT>
-{
+> extends Synchronizer<T, PropKey, ParamsT> {
     property: PropKey;
 
     read(

@@ -1,6 +1,6 @@
 import { Store } from "@ngxs/store";
 import { BehaviorSubject, forkJoin, merge, Observable, of, throwError, zip } from "rxjs";
-import { catchError, distinctUntilChanged, filter, map, mergeMap, shareReplay, take, tap } from "rxjs/operators";
+import { catchError, distinctUntilChanged, filter, map, mergeMap, publishReplay, refCount, take, tap } from "rxjs/operators";
 import { SyncState } from "./decorators/sync-state";
 import { Synchronizer } from "./synchronizer";
 
@@ -70,9 +70,6 @@ export class StateSelector<T> {
         return merge(...propertyNames.map(propertyName => this.onPropertySynced(propertyName)));
     }
 
-    public require<OptsT = any>(propertyName: keyof T, options?: Synchronizer.Options<OptsT>): Observable<T>;
-    public require<OptsT = any>(propertyNames: Array<keyof T>, options?: Synchronizer.Options<OptsT>): Observable<T>;
-
     public require<OptsT = any>(propertyNames: keyof T | Array<keyof T>, options?: Synchronizer.Options<OptsT>): Observable<T> {
         if (Array.isArray(propertyNames)) {
             return this.requireAll(propertyNames, options);
@@ -83,6 +80,18 @@ export class StateSelector<T> {
 
     public requireProperty<OptsT = any>(propertyName: keyof T, options?: Synchronizer.Options<OptsT>): Observable<T[typeof propertyName]> {
         return this.requireOne<OptsT>(propertyName, options).pipe(map(session => session[propertyName]));
+    }
+
+    public sync<OptsT = any>(propertyNames: keyof T | Array<keyof T>, options?: Synchronizer.Options<OptsT>): Observable<T> {
+        if (Array.isArray(propertyNames)) {
+            return this.syncAll(propertyNames, options);
+        } else {
+            return this.syncOne(propertyNames, options);
+        }
+    }
+
+    public syncProperty<OptsT = any>(propertyName: keyof T, options?: Synchronizer.Options<OptsT>): Observable<T[typeof propertyName]> {
+        return this.syncOne<OptsT>(propertyName, options).pipe(map(session => session[propertyName]));
     }
 
     private requireOne<OptsT = any>(propertyName: keyof T, options?: Synchronizer.Options<OptsT>): Observable<T> {
@@ -120,21 +129,6 @@ export class StateSelector<T> {
                 })
             );
         }
-    }
-
-    public sync<OptsT = any>(propertyName: keyof T, options?: Synchronizer.Options<OptsT>): Observable<T>;
-    public sync<OptsT = any>(propertyNames: Array<keyof T>, options?: Synchronizer.Options<OptsT>): Observable<T>;
-
-    public sync<OptsT = any>(propertyNames: keyof T | Array<keyof T>, options?: Synchronizer.Options<OptsT>): Observable<T> {
-        if (Array.isArray(propertyNames)) {
-            return this.syncAll(propertyNames, options);
-        } else {
-            return this.syncOne(propertyNames, options);
-        }
-    }
-
-    public syncProperty<OptsT = any>(propertyName: keyof T, options?: Synchronizer.Options<OptsT>): Observable<T[typeof propertyName]> {
-        return this.syncOne<OptsT>(propertyName, options).pipe(map(session => session[propertyName]));
     }
 
     private syncOne<OptsT = any>(propertyName: keyof T, options?: Synchronizer.Options<OptsT>): Observable<T> {
@@ -181,7 +175,8 @@ export class StateSelector<T> {
                         }),
                         tap(() => this.clearPropertyUpdater(propertyName, pendingRequest$)), // Remove the pending request
                         mergeMap(() => this.state$.pipe(take(1))), // Get the newly updated Session
-                        shareReplay(1)
+                        publishReplay(1),
+                        refCount()
                     );
 
                     this.pendingRequests$.next(Object.assign(pendingRequests, { [propertyName]: pendingRequest$ }));
