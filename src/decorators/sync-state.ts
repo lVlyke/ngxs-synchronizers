@@ -20,7 +20,8 @@ export function SyncState<T>(options: StoreOptions<T>): ClassDecorator {
         // Apply the @Action() decorator to the new function
         Action(SyncState.UpdateAction.For(constructor))(
             constructor.prototype,
-            UPDATE_ACTION_FN_NAME
+            UPDATE_ACTION_FN_NAME,
+            Object.getOwnPropertyDescriptor(constructor.prototype, UPDATE_ACTION_FN_NAME)
         );
 
         // Apply the @State() decorator to the class

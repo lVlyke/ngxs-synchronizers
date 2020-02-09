@@ -9,6 +9,7 @@ interface InternalStore {
     _internalStateOperations: any;
     _config: any;
     _internalExecutionStrategy: any;
+    _stateFactory: any;
 }
 
 @Injectable()
@@ -24,6 +25,7 @@ export class SyncStore extends Store {
             internalStore._internalStateOperations,
             internalStore._config,
             internalStore._internalExecutionStrategy,
+            internalStore._stateFactory,
             undefined
         );
 
