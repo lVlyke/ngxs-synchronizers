@@ -1,21 +1,27 @@
+import { Type } from "@angular/core";
 import { Action, State, StateContext } from "@ngxs/store";
 
 // From NGXS - Not exposed publicly
-export interface StoreOptions<T> {
+interface StoreOptions<T> {
     name: string;
     defaults?: T;
     children?: any[];
 }
 
-export const UPDATE_ACTION_FN_NAME = "$$updateProperty";
+const UPDATE_ACTION_FN_NAME = Symbol("$UPDATE_ACTION_FN");
+const PARENT_REF_KEY = Symbol("$PARENT_REF_KEY");
 
 export function SyncState<T>(options: StoreOptions<T>): ClassDecorator {
 
     return function(constructor: SyncState.Class) {
         // Add the update action function to the class
-        constructor.prototype[UPDATE_ACTION_FN_NAME] = function<StateT, PropertyT>(context: StateContext<StateT>, { property, payload }: SyncState.UpdateAction<StateT, PropertyT>) {
-            context.patchState({ [property]: payload } as any);
-        };
+        Object.defineProperty(constructor.prototype, UPDATE_ACTION_FN_NAME, {
+            configurable: false,
+            enumerable: true,
+            value<StateT, PropertyT>(context: StateContext<StateT>, { property, payload }: SyncState.UpdateAction<StateT, PropertyT>) {
+                context.patchState({ [property]: payload } as any);
+            }
+        });
 
         // Apply the @Action() decorator to the new function
         Action(SyncState.UpdateAction.For(constructor))(
@@ -24,14 +30,39 @@ export function SyncState<T>(options: StoreOptions<T>): ClassDecorator {
             Object.getOwnPropertyDescriptor(constructor.prototype, UPDATE_ACTION_FN_NAME)
         );
 
+        // Add parent metadata to the child store
+        options.children.forEach(child => {
+            Object.defineProperty(child, PARENT_REF_KEY, {
+                configurable: false,
+                value: constructor
+            });
+        });
+
         // Apply the @State() decorator to the class
-        State(options)(constructor);
+        State<T>(options)(constructor);
     } as any;
 }
 
 export namespace SyncState {
 
-    export type Class = (new(property: keyof Class, payload: Class[keyof Class]) => any) & { stateName: string; };
+    export interface ClassMetadata {
+        stateName: string;
+    }
+
+    export type Class = Type<any> & ClassMetadata;
+
+    export namespace Class {
+
+        export function resolveParent($class: Class): Class {
+            const parentDescriptor = Object.getOwnPropertyDescriptor($class, PARENT_REF_KEY);
+            return parentDescriptor ? parentDescriptor.value : undefined;
+        }
+
+        export function resolveParents($class: Class): Class[] {
+            const parent = resolveParent($class);
+            return parent ? [parent, ...resolveParents(parent)] : [];
+        }
+    }
 
     export class UpdateAction<StateT, PropertyT> {
         constructor(

@@ -174,7 +174,7 @@ export class StateSelector<T> {
                             return throwError(error);
                         }),
                         tap(() => this.clearPropertyUpdater(propertyName, pendingRequest$)), // Remove the pending request
-                        mergeMap(() => this.state$.pipe(take(1))), // Get the newly updated Session
+                        mergeMap(() => this.state$.pipe(take(1))), // Get the newly updated state
                         publishReplay(1),
                         refCount()
                     );

@@ -32,11 +32,13 @@ export class SyncStore extends Store {
         this.synchronizers = synchronizers;
     }
 
-    public state<T>(syncState: SyncState.Class, ...parentStates: SyncState.Class[]): StateSelector<T> {
+    public state<T>(syncState: SyncState.Class): StateSelector<T> {
+        const statePath: SyncState.Class[] = [...SyncState.Class.resolveParents(syncState).reverse(), syncState];
+
         return new StateSelector<T>(
             this,
             syncState,
-            this.select(state => [...parentStates, syncState].reduce((newState, curState) => newState[curState.stateName], state)),
+            this.select(state => statePath.reduce((newState, curState) => newState[curState.stateName], state)),
             this.synchronizers.getCollection<T>(syncState.stateName)
         );
     }
