@@ -1,4 +1,4 @@
-import { PropertySynchronizer } from "./../src/synchronizer";
+import { PropertySynchronizer } from "./../src/synchronizer/property-synchronizer";
 
 
 describe("Test", () => {
