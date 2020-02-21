@@ -6,4 +6,5 @@ export * from "./synchronizer/collection-synchronizer";
 export * from "./synchronizer/property-synchronizer";
 export * from "./synchronizer/state-synchronizer";
 export * from "./synchronizer/synchronizer";
+export * from "./synchronizer/synchronizer-dictionary";
 export * from "./decorators/sync-state";

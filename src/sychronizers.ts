@@ -3,6 +3,9 @@ import { CollectionSynchronizer } from "./synchronizer/collection-synchronizer";
 import { PropertySynchronizer } from "./synchronizer/property-synchronizer";
 import { Synchronizer } from "./synchronizer/synchronizer";
 
+/**
+ * @deprecated
+ */
 export class Synchronizers {
 
     public readonly collections: Synchronizers.Dictionary = {};
@@ -36,6 +39,9 @@ export class Synchronizers {
     }
 }
 
+/**
+ * @deprecated
+ */
 export namespace Synchronizers {
 
     export type Creator<SynchronizerT> = new(...args: any[]) => SynchronizerT;

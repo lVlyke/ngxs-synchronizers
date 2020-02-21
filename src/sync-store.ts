@@ -1,8 +1,7 @@
-import { Injectable } from "@angular/core";
+import { Injectable, Injector } from "@angular/core";
 import { Store } from "@ngxs/store";
 import { SyncState } from "./decorators/sync-state";
 import { StateSelector } from "./state-selector";
-import { Synchronizers } from "./sychronizers";
 
 interface InternalStore {
     _stateStream: any;
@@ -15,9 +14,12 @@ interface InternalStore {
 @Injectable()
 export class SyncStore extends Store {
 
-    private synchronizers: Synchronizers;
+    private readonly injector: Injector;
 
-    constructor(synchronizers: Synchronizers, store: Store) {
+    constructor(
+        injector: Injector,
+        store: Store
+    ) {
         const internalStore: InternalStore = store as any;
 
         super(
@@ -29,17 +31,18 @@ export class SyncStore extends Store {
             undefined
         );
 
-        this.synchronizers = synchronizers;
+        this.injector = injector;
     }
 
-    public state<T>(syncState: SyncState.Class): StateSelector<T> {
-        const statePath: SyncState.Class[] = [...SyncState.Class.resolveParents(syncState).reverse(), syncState];
+    public state<T>(syncState: SyncState.Class<T>): StateSelector<T> {
+        const statePath: SyncState.Class<unknown>[] = [...SyncState.Class.resolveParents(syncState).reverse(), syncState];
 
         return new StateSelector<T>(
+            this.injector,
             this,
             syncState,
             this.select(state => statePath.reduce((newState, curState) => newState[curState.stateName], state)),
-            this.synchronizers.getCollection<T>(syncState.stateName)
+            SyncState.Class.getStoreOptions(syncState).synchronizers
         );
     }
 }

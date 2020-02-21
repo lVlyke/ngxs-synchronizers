@@ -20,6 +20,9 @@ export namespace CollectionSynchronizer {
         ParamsT = any
     > = Synchronizer.ReadOptions<T, keyof T, ParamsT>;
 
+    /**
+     * @deprecated
+     */
     export class Collection<T> implements Synchronizer.ICollection<T> {
 
         constructor(private synchronizer: CollectionSynchronizer<T>) {}

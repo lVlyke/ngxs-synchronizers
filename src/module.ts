@@ -9,6 +9,9 @@ import { SyncStore } from "./sync-store";
 })
 export class NgxsSyncModule {
 
+    /**
+     * @deprecated
+     */
     public static withSynchronizers(synchronizerCollectionBuilder: Synchronizers.BuilderDictionary): ModuleWithProviders {
 
         return {

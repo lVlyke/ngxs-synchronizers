@@ -11,13 +11,13 @@ export abstract class StateSynchronizer<C, T extends keyof C> implements Propert
     constructor(
         private readonly injector: Injector,
         public readonly property: T,
-        private readonly state: SyncState.Class
+        private readonly state: SyncState.Class<T>
     ) {}
 
     public read(): Observable<C[T]> {
         const syncStore = this.injector.get(SyncStore);
         const synchronizers = this.injector.get(Synchronizers);
-        const stateSelector = syncStore.state<SyncState.Class>(this.state);
+        const stateSelector = syncStore.state<T>(this.state);
         const stateSynchronizerDict = synchronizers.getCollection<C[T]>(this.state.stateName) as PropertySynchronizer.Collection<C[T]>;
         const stateSynchronizers: PropertySynchronizer<C[T], any>[] = Object.values(stateSynchronizerDict.synchronizers);
 

@@ -26,6 +26,9 @@ export namespace PropertySynchronizer {
         ParamsT = any
     > = Synchronizer.ReadOptions<T, PropKey, ParamsT>;
 
+    /**
+     * @deprecated
+     */
     export class Collection<T> implements Synchronizer.ICollection<T> {
         protected _synchronizers: Dictionary<T> = {};
 

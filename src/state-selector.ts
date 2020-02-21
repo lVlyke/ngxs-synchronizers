@@ -1,8 +1,10 @@
+import { Injector } from "@angular/core";
 import { Store } from "@ngxs/store";
 import { BehaviorSubject, forkJoin, merge, Observable, of, throwError, zip } from "rxjs";
 import { catchError, distinctUntilChanged, filter, map, mergeMap, publishReplay, refCount, take, tap } from "rxjs/operators";
 import { SyncState } from "./decorators/sync-state";
 import { Synchronizer } from "./synchronizer/synchronizer";
+import { SynchronizerDictionary } from "./synchronizer/synchronizer-dictionary";
 
 type PendingStateRequestDictionary<T> = {
     [P in keyof T]?: Observable<T>;
@@ -13,16 +15,17 @@ export class StateSelector<T> {
     private readonly pendingRequests$ = new BehaviorSubject<PendingStateRequestDictionary<T>>({});
 
     constructor(
+        private injector: Injector,
         private store: Store,
-        private stateClass: SyncState.Class,
+        private stateClass: SyncState.Class<T>,
         private state$: Observable<T>,
-        private synchronizers: Synchronizer.ICollection<T>
+        private synchronizers: SynchronizerDictionary<T>
     ) {}
 
     public dispatch<PropT extends keyof T>(propertyName: PropT, value: T[PropT]): Observable<T> {
-        const updateAction = SyncState.UpdateAction.For<T, T[PropT]>(this.stateClass);
+        const PropUpdateAction = SyncState.UpdateAction.Type<T, PropT>(this.stateClass);
 
-        return this.store.dispatch(new updateAction(propertyName, value));
+        return this.store.dispatch(new PropUpdateAction(propertyName, value));
     }
 
     public property<PropT extends keyof T>(propertyName: PropT): Observable<T[PropT]> {
@@ -133,8 +136,12 @@ export class StateSelector<T> {
 
     private syncOne<PropT extends keyof T, OptsT = any>(propertyName: PropT, options?: Synchronizer.Options<OptsT>): Observable<T> {
         options = options || {};
-        const errorPrefix = "Error: Cannot update session info:";
-        const synchronizer = this.synchronizers.getSynchronizer(propertyName);
+        const errorPrefix = "[NGXS-Synchronizers] Cannot sync state:";
+        const synchronizer: Synchronizer<T, keyof T> = this.injector.get(SynchronizerDictionary.resolveSynchronizer(this.synchronizers, propertyName), null);
+
+        if (!synchronizer) {
+            return throwError(`${errorPrefix} No Synchronizer has been defined for state property "${propertyName}".`);
+        }
 
         // Check for cached values/pending requests only if this isn't a dependent requestor
         if (!synchronizer.proxy) {
@@ -144,7 +151,7 @@ export class StateSelector<T> {
             }
 
             if (synchronizer.requiredProperties && synchronizer.requiredProperties.some(requiredPropertyName => requiredPropertyName === propertyName)) {
-                return throwError(`${errorPrefix} Synchronizer requires a reference to itself.`);
+                return throwError(`${errorPrefix} Synchronizer for "${propertyName}" requires a reference to itself.`);
             }
         }
 
@@ -169,7 +176,6 @@ export class StateSelector<T> {
                         mergeMap((requiredDetails: any) => synchronizer.read(requiredDetails, { propertyName, ...options })),
                         mergeMap((value: any) => this.dispatch(propertyName, value)), // Update the store value
                         catchError((error) => {
-                            console.error(`Failed to request propertyName "${propertyName}": ${error}`);
                             this.clearPropertyUpdater(propertyName, pendingRequest$);
                             return throwError(error);
                         }),
