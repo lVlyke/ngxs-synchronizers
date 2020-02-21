@@ -28,12 +28,4 @@ export namespace Synchronizer {
     > extends Options<ParamsT> {
         propertyName: PropKey;
     }
-
-    /**
-     * @deprecated
-     */
-    export interface ICollection<T> {
-        setSynchronizer<ParamsT = any>(stateProperty: keyof T, synchronizer: Synchronizer<T, typeof stateProperty, ParamsT>): void;
-        getSynchronizer<ParamsT = any>(stateProperty: keyof T): Synchronizer<T, typeof stateProperty, ParamsT>;
-    }
 }

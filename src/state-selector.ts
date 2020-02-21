@@ -1,8 +1,8 @@
-import { Injector } from "@angular/core";
-import { Store } from "@ngxs/store";
+
 import { BehaviorSubject, forkJoin, merge, Observable, of, throwError, zip } from "rxjs";
 import { catchError, distinctUntilChanged, filter, map, mergeMap, publishReplay, refCount, take, tap } from "rxjs/operators";
 import { SyncState } from "./decorators/sync-state";
+import { SyncStore } from "./sync-store";
 import { Synchronizer } from "./synchronizer/synchronizer";
 import { SynchronizerDictionary } from "./synchronizer/synchronizer-dictionary";
 
@@ -12,14 +12,15 @@ type PendingStateRequestDictionary<T> = {
 
 export class StateSelector<T> {
 
+    public readonly synchronizers = SyncState.Class.getStoreOptions(this.stateClass).synchronizers;
+
+    private readonly injector = this.store.injector;
     private readonly pendingRequests$ = new BehaviorSubject<PendingStateRequestDictionary<T>>({});
 
     constructor(
-        private injector: Injector,
-        private store: Store,
+        private store: SyncStore,
         private stateClass: SyncState.Class<T>,
-        private state$: Observable<T>,
-        private synchronizers: SynchronizerDictionary<T>
+        private state$: Observable<T>
     ) {}
 
     public dispatch<PropT extends keyof T>(propertyName: PropT, value: T[PropT]): Observable<T> {
@@ -137,10 +138,11 @@ export class StateSelector<T> {
     private syncOne<PropT extends keyof T, OptsT = any>(propertyName: PropT, options?: Synchronizer.Options<OptsT>): Observable<T> {
         options = options || {};
         const errorPrefix = "[NGXS-Synchronizers] Cannot sync state:";
-        const synchronizer: Synchronizer<T, keyof T> = this.injector.get(SynchronizerDictionary.resolveSynchronizer(this.synchronizers, propertyName), null);
-
-        if (!synchronizer) {
-            return throwError(`${errorPrefix} No Synchronizer has been defined for state property "${propertyName}".`);
+        let synchronizer: Synchronizer<T, keyof T>;
+        try {
+            synchronizer = SynchronizerDictionary.resolveSynchronizerInstance(this.injector, this.synchronizers, propertyName);
+        } catch (error) {
+            return throwError(error);
         }
 
         // Check for cached values/pending requests only if this isn't a dependent requestor

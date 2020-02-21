@@ -58,8 +58,7 @@ export namespace SyncState {
     }
 
     export interface Class<T> extends ClassType<any> {
-        stateName: string;
-        [NGXS_SYNCHRONIZERS_METADATA_KEY]: Metadata<T>;
+        [NGXS_SYNCHRONIZERS_METADATA_KEY]?: Metadata<T>;
     }
 
     export namespace Class {
@@ -127,7 +126,7 @@ export namespace SyncState {
         export function Type<StateT, PropertyT extends keyof StateT = keyof StateT>($class: Class<StateT>): Type<StateT, PropertyT> {
             if (!updateActions.has($class)) {
                 updateActions.set($class, class extends UpdateAction<StateT, PropertyT> {
-                    public static readonly type: string = `[${$class.stateName} sync] Update field`;
+                    public static readonly type: string = `[${$class.name} sync] Update field`;
                 });
             }
 

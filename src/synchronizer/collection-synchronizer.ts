@@ -19,24 +19,4 @@ export namespace CollectionSynchronizer {
         T = any,
         ParamsT = any
     > = Synchronizer.ReadOptions<T, keyof T, ParamsT>;
-
-    /**
-     * @deprecated
-     */
-    export class Collection<T> implements Synchronizer.ICollection<T> {
-
-        constructor(private synchronizer: CollectionSynchronizer<T>) {}
-
-        public get synchronizers(): Dictionary<T> {
-            return this.synchronizer;
-        }
-
-        public setSynchronizer<ParamsT = any>(_stateProperty: keyof T, synchronizer: CollectionSynchronizer<T, ParamsT>): void {
-            this.synchronizer = synchronizer;
-        }
-
-        public getSynchronizer<ParamsT = any>(_stateProperty: keyof T): CollectionSynchronizer<T, ParamsT> {
-            return this.synchronizer;
-        }
-    }
 }

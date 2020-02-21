@@ -2,30 +2,43 @@ import { Injector } from "@angular/core";
 import { forkJoin, Observable } from "rxjs";
 import { map } from "rxjs/operators";
 import { SyncState } from "../decorators/sync-state";
-import { Synchronizers } from "../sychronizers";
+import { StateSelector } from "../state-selector";
 import { SyncStore } from "../sync-store";
 import { PropertySynchronizer } from "./property-synchronizer";
+import { SynchronizerDictionary } from "./synchronizer-dictionary";
 
-export abstract class StateSynchronizer<C, T extends keyof C> implements PropertySynchronizer<C, T> {
+export abstract class StateSynchronizer<
+    T,
+    PropKey extends keyof T
+> implements PropertySynchronizer<T, PropKey> {
 
     constructor(
         private readonly injector: Injector,
-        public readonly property: T,
-        private readonly state: SyncState.Class<T>
+        private readonly propertyState: SyncState.Class<T[PropKey]>
     ) {}
 
-    public read(): Observable<C[T]> {
+    public read(): Observable<T[PropKey]> {
         const syncStore = this.injector.get(SyncStore);
-        const synchronizers = this.injector.get(Synchronizers);
-        const stateSelector = syncStore.state<T>(this.state);
-        const stateSynchronizerDict = synchronizers.getCollection<C[T]>(this.state.stateName) as PropertySynchronizer.Collection<C[T]>;
-        const stateSynchronizers: PropertySynchronizer<C[T], any>[] = Object.values(stateSynchronizerDict.synchronizers);
+        const stateSelector = syncStore.state<T[PropKey]>(this.propertyState);
 
         // Sync each property in the sub-store that has a synchronizer
-        return forkJoin(stateSynchronizers.map(synchronizer => {
-            return stateSelector.syncProperty(synchronizer.property).pipe(
-                map(result => ({ [synchronizer.property]: result }))
-            );
-        })).pipe(map(results => Object.assign({}, ...results)));
+        return this.readProperties(stateSelector).pipe(map(results => Object.assign({}, ...results)));
+    }
+
+    private readProperties(
+        stateSelector: StateSelector<T[PropKey]>
+    ): Observable<Partial<T[PropKey]>[]> {
+        const synchronizerKeys = SynchronizerDictionary.keys(stateSelector.synchronizers);
+
+        // Sync each property in the dictionary
+        return forkJoin(synchronizerKeys.map((propKey) => this.readProperty(stateSelector, propKey)));
+    }
+
+    private readProperty<SubPropT extends keyof T[PropKey]>(
+        stateSelector: StateSelector<T[PropKey]>,
+        propKey: SubPropT
+    ): Observable<Partial<T[PropKey]>> {
+        // Use `syncProperty` to invoke the synchronizer for this property
+        return stateSelector.syncProperty<SubPropT>(propKey).pipe(map(result => ({ [propKey]: result }) as any));
     }
 }

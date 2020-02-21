@@ -14,12 +14,9 @@ interface InternalStore {
 @Injectable()
 export class SyncStore extends Store {
 
-    private readonly injector: Injector;
+    public readonly injector: Injector;
 
-    constructor(
-        injector: Injector,
-        store: Store
-    ) {
+    constructor(injector: Injector, store: Store) {
         const internalStore: InternalStore = store as any;
 
         super(
@@ -36,13 +33,10 @@ export class SyncStore extends Store {
 
     public state<T>(syncState: SyncState.Class<T>): StateSelector<T> {
         const statePath: SyncState.Class<unknown>[] = [...SyncState.Class.resolveParents(syncState).reverse(), syncState];
+        const state$ = this.select<T>(state => statePath.reduce((parentState, childState) => {
+            return parentState[SyncState.Class.getStoreOptions(childState).name];
+        }, state));
 
-        return new StateSelector<T>(
-            this.injector,
-            this,
-            syncState,
-            this.select(state => statePath.reduce((newState, curState) => newState[curState.stateName], state)),
-            SyncState.Class.getStoreOptions(syncState).synchronizers
-        );
+        return new StateSelector<T>(this, syncState, state$);
     }
 }

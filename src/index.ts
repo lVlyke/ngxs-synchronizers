@@ -1,6 +1,5 @@
 export * from "./module";
 export * from "./state-selector";
-export * from "./sychronizers";
 export * from "./sync-store";
 export * from "./synchronizer/collection-synchronizer";
 export * from "./synchronizer/property-synchronizer";

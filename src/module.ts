@@ -1,5 +1,4 @@
-import { Injector, ModuleWithProviders, NgModule,  } from "@angular/core";
-import { Synchronizers } from "./sychronizers";
+import { NgModule } from "@angular/core";
 import { SyncStore } from "./sync-store";
 
 @NgModule({
@@ -7,26 +6,4 @@ import { SyncStore } from "./sync-store";
         SyncStore
     ]
 })
-export class NgxsSyncModule {
-
-    /**
-     * @deprecated
-     */
-    public static withSynchronizers(synchronizerCollectionBuilder: Synchronizers.BuilderDictionary): ModuleWithProviders {
-
-        return {
-            ngModule: NgxsSyncModule,
-            providers: [
-                {
-                    provide: "BuilderDictionary",
-                    useValue: synchronizerCollectionBuilder
-                },
-                {
-                    deps: [Injector, "BuilderDictionary"],
-                    provide: Synchronizers,
-                    useClass: Synchronizers
-                }
-            ]
-        };
-    }
-}
+export class NgxsSyncModule {}
