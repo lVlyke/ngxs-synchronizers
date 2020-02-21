@@ -2,7 +2,7 @@ import { Store } from "@ngxs/store";
 import { BehaviorSubject, forkJoin, merge, Observable, of, throwError, zip } from "rxjs";
 import { catchError, distinctUntilChanged, filter, map, mergeMap, publishReplay, refCount, take, tap } from "rxjs/operators";
 import { SyncState } from "./decorators/sync-state";
-import { Synchronizer } from "./synchronizer";
+import { Synchronizer } from "./synchronizer/synchronizer";
 
 type PendingStateRequestDictionary<T> = {
     [P in keyof T]?: Observable<T>;
@@ -19,18 +19,18 @@ export class StateSelector<T> {
         private synchronizers: Synchronizer.ICollection<T>
     ) {}
 
-    public dispatch(propertyName: keyof T, value: T[typeof propertyName]): Observable<T> {
-        const updateAction = SyncState.UpdateAction.For<T, T[typeof propertyName]>(this.stateClass);
+    public dispatch<PropT extends keyof T>(propertyName: PropT, value: T[PropT]): Observable<T> {
+        const updateAction = SyncState.UpdateAction.For<T, T[PropT]>(this.stateClass);
 
         return this.store.dispatch(new updateAction(propertyName, value));
     }
 
-    public property(propertyName: keyof T): Observable<T[typeof propertyName]> {
+    public property<PropT extends keyof T>(propertyName: PropT): Observable<T[PropT]> {
         return this.state$.pipe(map((state: T) => state[propertyName]));
     }
 
-    public definedProperty(propertyName: keyof T): Observable<T[typeof propertyName]> {
-        return this.property(propertyName).pipe(filter<T[typeof propertyName]>(Boolean));
+    public definedProperty<PropT extends keyof T>(propertyName: PropT): Observable<T[PropT]> {
+        return this.property<PropT>(propertyName).pipe(filter<T[PropT]>(Boolean));
     }
 
     public isSyncingProperty(propertyName: keyof T): Observable<boolean> {
@@ -40,14 +40,14 @@ export class StateSelector<T> {
         );
     }
 
-    public onPropertySyncing(propertyName: keyof T): Observable<keyof T> {
+    public onPropertySyncing<PropT extends keyof T>(propertyName: PropT): Observable<PropT> {
         return this.isSyncingProperty(propertyName).pipe(
             filter(Boolean),
             map(() => propertyName),
         );
     }
 
-    public onPropertySynced(propertyName: keyof T): Observable<keyof T> {
+    public onPropertySynced<PropT extends keyof T>(propertyName: PropT): Observable<PropT> {
         return this.isSyncingProperty(propertyName).pipe(
             filter(updating => !updating),
             map(() => propertyName)
@@ -72,29 +72,29 @@ export class StateSelector<T> {
 
     public require<OptsT = any>(propertyNames: keyof T | Array<keyof T>, options?: Synchronizer.Options<OptsT>): Observable<T> {
         if (Array.isArray(propertyNames)) {
-            return this.requireAll(propertyNames, options);
+            return this.requireAll<OptsT>(propertyNames, options);
         } else {
-            return this.requireOne(propertyNames, options);
+            return this.requireOne<keyof T, OptsT>(propertyNames, options);
         }
     }
 
-    public requireProperty<OptsT = any>(propertyName: keyof T, options?: Synchronizer.Options<OptsT>): Observable<T[typeof propertyName]> {
-        return this.requireOne<OptsT>(propertyName, options).pipe(map(session => session[propertyName]));
+    public requireProperty<PropT extends keyof T, OptsT = any>(propertyName: PropT, options?: Synchronizer.Options<OptsT>): Observable<T[PropT]> {
+        return this.requireOne<PropT, OptsT>(propertyName, options).pipe(map(session => session[propertyName]));
     }
 
     public sync<OptsT = any>(propertyNames: keyof T | Array<keyof T>, options?: Synchronizer.Options<OptsT>): Observable<T> {
         if (Array.isArray(propertyNames)) {
-            return this.syncAll(propertyNames, options);
+            return this.syncAll<OptsT>(propertyNames, options);
         } else {
-            return this.syncOne(propertyNames, options);
+            return this.syncOne<keyof T, OptsT>(propertyNames, options);
         }
     }
 
-    public syncProperty<OptsT = any>(propertyName: keyof T, options?: Synchronizer.Options<OptsT>): Observable<T[typeof propertyName]> {
-        return this.syncOne<OptsT>(propertyName, options).pipe(map(session => session[propertyName]));
+    public syncProperty<PropT extends keyof T, OptsT = any>(propertyName: PropT, options?: Synchronizer.Options<OptsT>): Observable<T[PropT]> {
+        return this.syncOne<PropT, OptsT>(propertyName, options).pipe(map(session => session[propertyName]));
     }
 
-    private requireOne<OptsT = any>(propertyName: keyof T, options?: Synchronizer.Options<OptsT>): Observable<T> {
+    private requireOne<PropT extends keyof T, OptsT = any>(propertyName: PropT, options?: Synchronizer.Options<OptsT>): Observable<T> {
         return this.state$.pipe(
             take(1),
             mergeMap(state => {
@@ -113,7 +113,7 @@ export class StateSelector<T> {
         } else {
             const errors: any[] = [];
             return forkJoin(propertyNames.map(propertyName => {
-                return this.requireOne(propertyName, options).pipe(
+                return this.requireOne<keyof T, OptsT>(propertyName, options).pipe(
                     catchError((error) => {
                         errors.push(error);
                         return of(undefined);
@@ -124,14 +124,14 @@ export class StateSelector<T> {
                     if (errors.length === 0) {
                         return this.state$.pipe(take(1));
                     } else {
-                        return throwError(`Error requiring properties: ${errors.join(", ")}`);
+                        return throwError(errors);
                     }
                 })
             );
         }
     }
 
-    private syncOne<OptsT = any>(propertyName: keyof T, options?: Synchronizer.Options<OptsT>): Observable<T> {
+    private syncOne<PropT extends keyof T, OptsT = any>(propertyName: PropT, options?: Synchronizer.Options<OptsT>): Observable<T> {
         options = options || {};
         const errorPrefix = "Error: Cannot update session info:";
         const synchronizer = this.synchronizers.getSynchronizer(propertyName);
@@ -159,9 +159,9 @@ export class StateSelector<T> {
                 } else {
                     // First request any required fields needed to fetch the propertyName
                     if (synchronizer.proxy) {
-                        pendingRequest$ = this.syncAll(synchronizer.requiredProperties, options);
+                        pendingRequest$ = this.syncAll<OptsT>(synchronizer.requiredProperties, options);
                     } else {
-                        pendingRequest$ = this.requireAll(synchronizer.requiredProperties || []);
+                        pendingRequest$ = this.requireAll<OptsT>(synchronizer.requiredProperties || []);
                     }
 
                     // Then fetch the propertyName

@@ -9,8 +9,8 @@ export interface Synchronizer<
     proxy?: boolean;
 
     read(
-        requiredDetails?: Partial<T>,
-        options?: Synchronizer.ReadOptions<T, PropKey, ParamsT>
+        requiredDetails: Partial<T>,
+        options: Synchronizer.ReadOptions<T, PropKey, ParamsT>
     ): Observable<T[PropKey]>;
 }
 

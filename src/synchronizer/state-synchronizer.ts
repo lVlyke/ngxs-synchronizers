@@ -4,7 +4,7 @@ import { map } from "rxjs/operators";
 import { SyncState } from "../decorators/sync-state";
 import { Synchronizers } from "../sychronizers";
 import { SyncStore } from "../sync-store";
-import { PropertySynchronizer } from "../synchronizer";
+import { PropertySynchronizer } from "./property-synchronizer";
 
 export abstract class StateSynchronizer<C, T extends keyof C> implements PropertySynchronizer<C, T> {
 

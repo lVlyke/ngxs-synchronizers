@@ -1,5 +1,5 @@
 import { Observable } from "rxjs";
-import { Synchronizer } from "../synchronizer";
+import { Synchronizer } from "./synchronizer";
 
 export interface PropertySynchronizer<
     T,
@@ -9,8 +9,8 @@ export interface PropertySynchronizer<
     property: PropKey;
 
     read(
-        requiredDetails?: Partial<T>,
-        options?: PropertySynchronizer.ReadOptions<T, PropKey, ParamsT>
+        requiredDetails: Partial<T>,
+        options: PropertySynchronizer.ReadOptions<T, PropKey, ParamsT>
     ): Observable<T[PropKey]>;
 }
 
