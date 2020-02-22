@@ -276,7 +276,9 @@ export class StateSelector<T> {
         // Write the latest data in the store
         return this.property(propertyName).pipe(
             take(1),
-            mergeMap(data => synchronizer.write(data, { propertyName, ...options }))
+            mergeMap(data => synchronizer.write(data, { propertyName, ...options })),
+            publishReplay(1),
+            refCount()
         );
     }
 
