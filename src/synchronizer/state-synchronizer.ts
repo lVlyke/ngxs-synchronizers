@@ -1,7 +1,7 @@
 import { Injector } from "@angular/core";
 import { forkJoin, Observable } from "rxjs";
 import { map } from "rxjs/operators";
-import { SyncState } from "../decorators/sync-state";
+import { SyncClass } from "../decorators/sync-class";
 import { StateSelector } from "../state-selector";
 import { SyncStore } from "../sync-store";
 import { PropertySynchronizer } from "./property-synchronizer";
@@ -14,7 +14,7 @@ export abstract class StateSynchronizer<
 
     constructor(
         private readonly injector: Injector,
-        private readonly propertyState: SyncState.Class<T[PropKey]>
+        private readonly propertyState: SyncClass<T[PropKey]>
     ) {}
 
     public read(): Observable<T[PropKey]> {

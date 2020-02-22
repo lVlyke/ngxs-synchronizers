@@ -1,6 +1,7 @@
 
 import { BehaviorSubject, forkJoin, merge, Observable, of, throwError, zip } from "rxjs";
 import { catchError, distinctUntilChanged, filter, map, mergeMap, publishReplay, refCount, take, tap } from "rxjs/operators";
+import { SyncClass } from "./decorators/sync-class";
 import { SyncState } from "./decorators/sync-state";
 import { SyncStore } from "./sync-store";
 import { Synchronizer } from "./synchronizer/synchronizer";
@@ -12,14 +13,14 @@ type PendingStateRequestDictionary<T> = {
 
 export class StateSelector<T> {
 
-    public readonly synchronizers = SyncState.Class.getStoreOptions(this.stateClass).synchronizers;
+    public readonly synchronizers = SyncClass.getStoreOptions(this.stateClass).synchronizers;
 
     private readonly injector = this.store.injector;
     private readonly pendingRequests$ = new BehaviorSubject<PendingStateRequestDictionary<T>>({});
 
     constructor(
         private store: SyncStore,
-        private stateClass: SyncState.Class<T>,
+        private stateClass: SyncClass<T>,
         private state$: Observable<T>
     ) {}
 

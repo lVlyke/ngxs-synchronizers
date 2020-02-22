@@ -1,6 +1,6 @@
 import { Injectable, Injector } from "@angular/core";
 import { Store } from "@ngxs/store";
-import { SyncState } from "./decorators/sync-state";
+import { SyncClass } from "./decorators/sync-class";
 import { StateSelector } from "./state-selector";
 
 interface InternalStore {
@@ -31,10 +31,10 @@ export class SyncStore extends Store {
         this.injector = injector;
     }
 
-    public state<T>(syncState: SyncState.Class<T>): StateSelector<T> {
-        const statePath: SyncState.Class<unknown>[] = [...SyncState.Class.resolveParents(syncState).reverse(), syncState];
+    public state<T>(syncState: SyncClass<T>): StateSelector<T> {
+        const statePath: SyncClass<unknown>[] = [...SyncClass.resolveParents(syncState).reverse(), syncState];
         const state$ = this.select<T>(state => statePath.reduce((parentState, childState) => {
-            return parentState[SyncState.Class.getStoreOptions(childState).name];
+            return parentState[SyncClass.getStoreOptions(childState).name];
         }, state));
 
         return new StateSelector<T>(this, syncState, state$);
