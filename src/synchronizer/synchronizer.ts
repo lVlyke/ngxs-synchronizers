@@ -3,29 +3,40 @@ import { Observable } from "rxjs";
 export interface Synchronizer<
     T,
     PropKey extends keyof T,
-    ParamsT = any
+    ReadParamsT,
+    WriteParamsT
 > {
     requiredProperties?: Array<keyof T>;
     proxy?: boolean;
 
     read(
         requiredDetails: Partial<T>,
-        options: Synchronizer.ReadOptions<T, PropKey, ParamsT>
+        options: Synchronizer.BaseOptions<T, PropKey, ReadParamsT> & Synchronizer.ReadOptions<ReadParamsT>
     ): Observable<T[PropKey]>;
+
+    write?(
+        value: T[PropKey],
+        options: Synchronizer.BaseOptions<T, PropKey, WriteParamsT> & Synchronizer.WriteOptions<WriteParamsT>
+    ): Observable<any>;
 }
 
 export namespace Synchronizer {
 
-    export interface Options<ParamsT = any> {
-        requestParams?: ParamsT;
-        clearStore?: boolean;
-    }
-
-    export interface ReadOptions<
+    export interface BaseOptions<
         T,
         PropKey extends keyof T,
-        ParamsT = any
-    > extends Options<ParamsT> {
+        ParamsT
+    > {
         propertyName: PropKey;
+        requestParams?: ParamsT;
+    }
+
+    export interface ReadOptions<ParamsT> {
+        clearStore?: boolean;
+        requestParams?: ParamsT;
+    }
+
+    export interface WriteOptions<ParamsT> {
+        requestParams?: ParamsT;
     }
 }

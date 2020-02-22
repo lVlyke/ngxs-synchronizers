@@ -1,5 +1,5 @@
 
-import { BehaviorSubject, forkJoin, merge, Observable, of, throwError, zip } from "rxjs";
+import { BehaviorSubject, empty, forkJoin, merge, Observable, of, throwError, zip } from "rxjs";
 import { catchError, distinctUntilChanged, filter, map, mergeMap, publishReplay, refCount, take, tap } from "rxjs/operators";
 import { SyncClass } from "./decorators/sync-class";
 import { SyncState } from "./decorators/sync-state";
@@ -75,50 +75,79 @@ export class StateSelector<T> {
         return merge(...propertyNames.map(propertyName => this.onPropertySynced(propertyName)));
     }
 
-    public require<OptsT = any>(propertyNames: keyof T | Array<keyof T>, options?: Synchronizer.Options<OptsT>): Observable<T> {
+    public require<RequestParamsT = never>(
+        propertyNames: keyof T | Array<keyof T>,
+        options?: Synchronizer.ReadOptions<RequestParamsT>
+    ): Observable<T> {
         if (Array.isArray(propertyNames)) {
-            return this.requireAll<OptsT>(propertyNames, options);
+            return this.requireAll<RequestParamsT>(propertyNames, options);
         } else {
-            return this.requireOne<keyof T, OptsT>(propertyNames, options);
+            return this.requireOne<keyof T, RequestParamsT>(propertyNames, options);
         }
     }
 
-    public requireProperty<PropT extends keyof T, OptsT = any>(propertyName: PropT, options?: Synchronizer.Options<OptsT>): Observable<T[PropT]> {
-        return this.requireOne<PropT, OptsT>(propertyName, options).pipe(map(session => session[propertyName]));
+    public requireProperty<PropT extends keyof T, RequestParamsT = never>(
+        propertyName: PropT,
+        options?: Synchronizer.ReadOptions<RequestParamsT>
+    ): Observable<T[PropT]> {
+        return this.requireOne<PropT, RequestParamsT>(propertyName, options).pipe(map(session => session[propertyName]));
     }
 
-    public sync<OptsT = any>(propertyNames: keyof T | Array<keyof T>, options?: Synchronizer.Options<OptsT>): Observable<T> {
+    public sync<RequestParamsT = never>(
+        propertyNames: keyof T | Array<keyof T>,
+        options?: Synchronizer.ReadOptions<RequestParamsT>
+    ): Observable<T> {
         if (Array.isArray(propertyNames)) {
-            return this.syncAll<OptsT>(propertyNames, options);
+            return this.syncAll<RequestParamsT>(propertyNames, options);
         } else {
-            return this.syncOne<keyof T, OptsT>(propertyNames, options);
+            return this.syncOne<keyof T, RequestParamsT>(propertyNames, options);
         }
     }
 
-    public syncProperty<PropT extends keyof T, OptsT = any>(propertyName: PropT, options?: Synchronizer.Options<OptsT>): Observable<T[PropT]> {
-        return this.syncOne<PropT, OptsT>(propertyName, options).pipe(map(session => session[propertyName]));
+    public syncProperty<PropT extends keyof T, RequestParamsT = never>(
+        propertyName: PropT,
+        options?: Synchronizer.ReadOptions<RequestParamsT>
+    ): Observable<T[PropT]> {
+        return this.syncOne<PropT, RequestParamsT>(propertyName, options).pipe(map(session => session[propertyName]));
     }
 
-    private requireOne<PropT extends keyof T, OptsT = any>(propertyName: PropT, options?: Synchronizer.Options<OptsT>): Observable<T> {
+    public export<RequestParamsT = never>(
+        propertyNames: keyof T | Array<keyof T>,
+        options?: Synchronizer.WriteOptions<RequestParamsT>
+    ): Observable<any> {
+        if (Array.isArray(propertyNames)) {
+            return this.exportAll<RequestParamsT>(propertyNames, options);
+        } else {
+            return this.exportOne<keyof T, RequestParamsT>(propertyNames, options);
+        }
+    }
+
+    private requireOne<PropT extends keyof T, RequestParamsT = never>(
+        propertyName: PropT,
+        options?: Synchronizer.ReadOptions<RequestParamsT>
+    ): Observable<T> {
         return this.state$.pipe(
             take(1),
             mergeMap(state => {
                 if (state[propertyName]) {
                     return of(state);
                 } else {
-                    return this.sync<OptsT>(propertyName, options);
+                    return this.sync<RequestParamsT>(propertyName, options);
                 }
             })
         );
     }
 
-    private requireAll<OptsT = any>(propertyNames: Array<keyof T>, options?: Synchronizer.Options<OptsT>): Observable<T> {
+    private requireAll<RequestParamsT = never>(
+        propertyNames: Array<keyof T>,
+        options?: Synchronizer.ReadOptions<RequestParamsT>
+    ): Observable<T> {
         if (propertyNames.length === 0) {
             return this.state$.pipe(take(1));
         } else {
             const errors: any[] = [];
             return forkJoin(propertyNames.map(propertyName => {
-                return this.requireOne<keyof T, OptsT>(propertyName, options).pipe(
+                return this.requireOne<keyof T, RequestParamsT>(propertyName, options).pipe(
                     catchError((error) => {
                         errors.push(error);
                         return of(undefined);
@@ -136,12 +165,16 @@ export class StateSelector<T> {
         }
     }
 
-    private syncOne<PropT extends keyof T, OptsT = any>(propertyName: PropT, options?: Synchronizer.Options<OptsT>): Observable<T> {
+    private syncOne<PropT extends keyof T, RequestParamsT = never>(
+        propertyName: PropT,
+        options?: Synchronizer.ReadOptions<RequestParamsT>
+    ): Observable<T> {
         options = options || {};
         const errorPrefix = "[NGXS-Synchronizers] Cannot sync state:";
-        let synchronizer: Synchronizer<T, keyof T>;
+
+        let synchronizer: Synchronizer<T, PropT, RequestParamsT, never>;
         try {
-            synchronizer = SynchronizerDictionary.resolveSynchronizerInstance(this.injector, this.synchronizers, propertyName);
+            synchronizer = this.resolveSynchronizer(propertyName);
         } catch (error) {
             return throwError(error);
         }
@@ -169,9 +202,9 @@ export class StateSelector<T> {
                 } else {
                     // First request any required fields needed to fetch the propertyName
                     if (synchronizer.proxy) {
-                        pendingRequest$ = this.syncAll<OptsT>(synchronizer.requiredProperties, options);
+                        pendingRequest$ = this.syncAll<RequestParamsT>(synchronizer.requiredProperties, options);
                     } else {
-                        pendingRequest$ = this.requireAll<OptsT>(synchronizer.requiredProperties || []);
+                        pendingRequest$ = this.requireAll<RequestParamsT>(synchronizer.requiredProperties || []);
                     }
 
                     // Then fetch the propertyName
@@ -195,7 +228,10 @@ export class StateSelector<T> {
         );
     }
 
-    private syncAll<OptsT = any>(propertyNames: Array<keyof T>, options?: Synchronizer.Options<OptsT>): Observable<T> {
+    private syncAll<RequestParamsT = never>(
+        propertyNames: Array<keyof T>,
+        options?: Synchronizer.ReadOptions<RequestParamsT>
+    ): Observable<T> {
         options = options || {};
 
         if (propertyNames.length === 0) {
@@ -204,7 +240,7 @@ export class StateSelector<T> {
 
         // Update each required propertyName
         const errors: any[] = [];
-        return forkJoin(propertyNames.map(name => this.sync<OptsT>(name, options).pipe(
+        return forkJoin(propertyNames.map(name => this.sync<RequestParamsT>(name, options).pipe(
             catchError((error) => {
                 errors.push(error);
                 return of(undefined);
@@ -213,7 +249,59 @@ export class StateSelector<T> {
                     if (errors.length === 0) {
                         return this.state$.pipe(take(1));
                     } else {
-                        return throwError(`Error updating properties: ${errors.join(", ")}`);
+                        return throwError(`Error syncing properties: ${errors.join(", ")}`);
+                    }
+                })
+            );
+    }
+
+    private exportOne<PropT extends keyof T, RequestParamsT = never>(
+        propertyName: PropT,
+        options?: Synchronizer.WriteOptions<RequestParamsT>
+    ): Observable<any> {
+        options = options || {};
+        const errorPrefix = "[NGXS-Synchronizers] Cannot export state:";
+
+        let synchronizer: Synchronizer<T, PropT, never, RequestParamsT>;
+        try {
+            synchronizer = this.resolveSynchronizer(propertyName);
+        } catch (error) {
+            return throwError(error);
+        }
+
+        if (!synchronizer.write) {
+            return throwError(`${errorPrefix} Synchronizer for "${propertyName}" doesn't have a write method defined.`);
+        }
+
+        // Write the latest data in the store
+        return this.property(propertyName).pipe(
+            take(1),
+            mergeMap(data => synchronizer.write(data, { propertyName, ...options }))
+        );
+    }
+
+    private exportAll<RequestParamsT = never>(
+        propertyNames: Array<keyof T>,
+        options?: Synchronizer.WriteOptions<RequestParamsT>
+    ): Observable<any> {
+        options = options || {};
+
+        if (propertyNames.length === 0) {
+            return empty();
+        }
+
+        // Update each required propertyName
+        const errors: any[] = [];
+        return forkJoin(propertyNames.map(name => this.export<RequestParamsT>(name, options).pipe(
+            catchError((error) => {
+                errors.push(error);
+                return of(undefined);
+            })))).pipe(
+                mergeMap((results) => {
+                    if (errors.length === 0) {
+                        return of(results);
+                    } else {
+                        return throwError(`Error exporting properties: ${errors.join(", ")}`);
                     }
                 })
             );
@@ -228,5 +316,13 @@ export class StateSelector<T> {
             take(1),
             filter(pendingRequests => pendingRequests[propertyName] === request)
         ).subscribe(pendingRequests => this.pendingRequests$.next(Object.assign(pendingRequests, { [propertyName]: undefined })));
+    }
+
+    private resolveSynchronizer<PropT extends keyof T, RequestParamsT>(propertyName: PropT): Synchronizer<T, PropT, RequestParamsT, RequestParamsT> {
+        return SynchronizerDictionary.resolveSynchronizerInstance(
+            this.injector,
+            this.synchronizers,
+            propertyName
+        ) as Synchronizer<T, PropT, never, RequestParamsT>;
     }
 }

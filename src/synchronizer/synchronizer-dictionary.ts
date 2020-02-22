@@ -22,7 +22,7 @@ export namespace SynchronizerDictionary {
     export function resolveSynchronizer<T>(
         dict: SynchronizerDictionary<T>,
         propKey: keyof T
-    ): Type<Synchronizer<T, keyof T>> {
+    ): Type<Synchronizer<T, keyof T, unknown, unknown>> {
         return isCollectionSynchronizer(dict) ? dict : dict[propKey];
     }
 
@@ -30,7 +30,7 @@ export namespace SynchronizerDictionary {
         injector: Injector,
         dict: SynchronizerDictionary<T>,
         propKey: keyof T
-    ): Synchronizer<T, keyof T> {
+    ): Synchronizer<T, keyof T, unknown, unknown> {
         return injector.get(resolveSynchronizer(dict, propKey));
     }
 }
