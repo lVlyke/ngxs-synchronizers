@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/ng-packagr/package.schema.json",
   "name": "ngxs-synchronizers",
-  "version": "0.4.0-beta.1",
+  "version": "0.4.0",
   "description": "Easily keep your app's local state synchronized with your backend, databases and more! ngxs-synchronizers simplifies synchronizing your NGXS-based application state with external data sources.",
   "author": "Mychal Thompson <mychal.r.thompson@gmail.com>",
   "license": "MIT",
