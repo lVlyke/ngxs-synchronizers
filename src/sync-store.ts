@@ -15,6 +15,7 @@ interface InternalStore {
 export class SyncStore extends Store {
 
     public readonly injector: Injector;
+    private readonly _selectorMap: Map<SyncClass<any>, StateSelector<any>>;
 
     constructor(injector: Injector, store: Store) {
         const internalStore: InternalStore = store as any;
@@ -29,14 +30,21 @@ export class SyncStore extends Store {
         );
 
         this.injector = injector;
+        this._selectorMap = new Map();
     }
 
     public state<T>(syncState: SyncClass<T>): StateSelector<T> {
-        const statePath: SyncClass<unknown>[] = [...SyncClass.resolveParents(syncState).reverse(), syncState];
-        const state$ = this.select<T>(state => statePath.reduce((parentState, childState) => {
-            return parentState[SyncClass.getStoreOptions(childState).name];
-        }, state));
+        // If the selector hasn't been created for this state class yet, create it
+        if (!this._selectorMap.has(syncState)) {
+            const statePath: SyncClass<unknown>[] = [...SyncClass.resolveParents(syncState).reverse(), syncState];
+            const state$ = this.select<T>(state => statePath.reduce((parentState, childState) => {
+                return parentState[SyncClass.getStoreOptions(childState).name];
+            }, state));
 
-        return new StateSelector<T>(this, syncState, state$);
+            // Record each state selector to keep pending requests in sync between state() calls
+            this._selectorMap.set(syncState, new StateSelector<T>(this, syncState, state$));
+        }
+
+        return this._selectorMap.get(syncState);
     }
 }

@@ -11,7 +11,9 @@ export function SyncState<T>(options: SyncStoreOptions<T>): ClassDecorator {
         SyncState.UpdateAction.bootstrapClass(constructor);
 
         // Record the parent store class for any child stores
-        options.children.forEach(child => SyncClass.setParent(child, constructor));
+        if (options.children) {
+            options.children.forEach(child => SyncClass.setParent(child, constructor));
+        }
 
         // Apply the @State() decorator to the class
         State<T>(options)(constructor);
