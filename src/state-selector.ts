@@ -34,6 +34,10 @@ export class StateSelector<T> {
         return this.state$.pipe(map((state: T) => state[propertyName]));
     }
 
+    public properties(): Observable<T> {
+        return this.state$;
+    }
+
     public definedProperty<PropT extends keyof T>(propertyName: PropT): Observable<T[PropT]> {
         return this.property<PropT>(propertyName).pipe(filter<T[PropT]>(Boolean));
     }
