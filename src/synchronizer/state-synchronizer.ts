@@ -1,5 +1,5 @@
 import { Injector } from "@angular/core";
-import { forkJoin, Observable } from "rxjs";
+import { forkJoin, Observable, of } from "rxjs";
 import { map, switchMap, take } from "rxjs/operators";
 import { SyncClass } from "../decorators/sync-class";
 import { StateSelector } from "../state-selector";
@@ -49,7 +49,9 @@ export abstract class StateSynchronizer<
         keys: Array<keyof T[PropKey]>
     ): Observable<Partial<T[PropKey]>[]> {
         // Sync each property in the dictionary
-        return forkJoin(keys.map((propKey) => this.readProperty(stateSelector, propKey)));
+        return keys.length > 0
+            ? forkJoin(keys.map((propKey) => this.readProperty(stateSelector, propKey)))
+            : of([]);
     }
 
     private readProperty<SubPropT extends keyof T[PropKey]>(
