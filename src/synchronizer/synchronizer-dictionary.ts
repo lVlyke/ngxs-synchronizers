@@ -31,6 +31,12 @@ export namespace SynchronizerDictionary {
         dict: SynchronizerDictionary<T>,
         propKey: keyof T
     ): Synchronizer<T, keyof T, unknown, unknown> {
-        return injector.get(resolveSynchronizer(dict, propKey));
+        const synchronizerDef = resolveSynchronizer(dict, propKey);
+
+        if (!!synchronizerDef) {
+            return injector.get(synchronizerDef);
+        } else {
+            throw new Error(`A Synchronizer has not been defined for property '${propKey}.`);
+        }
     }
 }
