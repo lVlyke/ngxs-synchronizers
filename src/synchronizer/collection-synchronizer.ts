@@ -3,37 +3,30 @@ import { Synchronizer } from "./synchronizer";
 
 export interface CollectionSynchronizer<
     T,
-    ParamsT = any
-> extends Synchronizer<T, keyof T, ParamsT> {
+    ReadParamsT = never,
+    WriteParamsT = never
+> extends Synchronizer<T, keyof T, ReadParamsT, WriteParamsT> {
+
     read(
         requiredDetails: Partial<T>,
-        options: CollectionSynchronizer.ReadOptions<T, ParamsT>
+        options: CollectionSynchronizer.ReadOptions<T, ReadParamsT>
     ): Observable<T[keyof T]>;
+
+    write?(
+        value: T[keyof T],
+        options: CollectionSynchronizer.WriteOptions<T, WriteParamsT>
+    ): Observable<any>;
 }
 
 export namespace CollectionSynchronizer {
 
-    export type Dictionary<T> = CollectionSynchronizer<T>;
-
     export type ReadOptions<
-        T = any,
-        ParamsT = any
-    > = Synchronizer.ReadOptions<T, keyof T, ParamsT>;
+        T,
+        ParamsT = never
+    > = Synchronizer.BaseOptions<T, keyof T, ParamsT> & Synchronizer.ReadOptions<ParamsT>;
 
-    export class Collection<T> implements Synchronizer.ICollection<T> {
-
-        constructor(private synchronizer: CollectionSynchronizer<T>) {}
-
-        public get synchronizers(): Dictionary<T> {
-            return this.synchronizer;
-        }
-
-        public setSynchronizer<ParamsT = any>(_stateProperty: keyof T, synchronizer: CollectionSynchronizer<T, ParamsT>): void {
-            this.synchronizer = synchronizer;
-        }
-
-        public getSynchronizer<ParamsT = any>(_stateProperty: keyof T): CollectionSynchronizer<T, ParamsT> {
-            return this.synchronizer;
-        }
-    }
+    export type WriteOptions<
+        T,
+        ParamsT = never
+    > = Synchronizer.BaseOptions<T, keyof T, ParamsT> & Synchronizer.WriteOptions<ParamsT>;
 }

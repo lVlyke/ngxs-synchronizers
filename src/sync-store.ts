@@ -1,8 +1,7 @@
-import { Injectable } from "@angular/core";
+import { Injectable, Injector } from "@angular/core";
 import { Store } from "@ngxs/store";
-import { SyncState } from "./decorators/sync-state";
+import { SyncClass } from "./decorators/sync-class";
 import { StateSelector } from "./state-selector";
-import { Synchronizers } from "./sychronizers";
 
 interface InternalStore {
     _stateStream: any;
@@ -15,9 +14,10 @@ interface InternalStore {
 @Injectable()
 export class SyncStore extends Store {
 
-    private synchronizers: Synchronizers;
+    public readonly injector: Injector;
+    private readonly _selectorMap: Map<SyncClass<any>, StateSelector<any>>;
 
-    constructor(synchronizers: Synchronizers, store: Store) {
+    constructor(injector: Injector, store: Store) {
         const internalStore: InternalStore = store as any;
 
         super(
@@ -29,17 +29,22 @@ export class SyncStore extends Store {
             undefined
         );
 
-        this.synchronizers = synchronizers;
+        this.injector = injector;
+        this._selectorMap = new Map();
     }
 
-    public state<T>(syncState: SyncState.Class): StateSelector<T> {
-        const statePath: SyncState.Class[] = [...SyncState.Class.resolveParents(syncState).reverse(), syncState];
+    public state<T>(syncState: SyncClass<T>): StateSelector<T> {
+        // If the selector hasn't been created for this state class yet, create it
+        if (!this._selectorMap.has(syncState)) {
+            const statePath: SyncClass<unknown>[] = [...SyncClass.resolveParents(syncState).reverse(), syncState];
+            const state$ = this.select<T>(state => statePath.reduce((parentState, childState) => {
+                return parentState[SyncClass.getStoreOptions(childState).name];
+            }, state));
 
-        return new StateSelector<T>(
-            this,
-            syncState,
-            this.select(state => statePath.reduce((newState, curState) => newState[curState.stateName], state)),
-            this.synchronizers.getCollection<T>(syncState.stateName)
-        );
+            // Record each state selector to keep pending requests in sync between state() calls
+            this._selectorMap.set(syncState, new StateSelector<T>(this, syncState, state$));
+        }
+
+        return this._selectorMap.get(syncState);
     }
 }

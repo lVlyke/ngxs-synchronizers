@@ -1,5 +1,5 @@
-import { PropertySynchronizer } from "./../src/synchronizer/property-synchronizer";
+import { SyncState } from "../src/decorators/sync-state";
 
 describe("Test", () => {
-    it("works", () => expect(PropertySynchronizer).toBeTruthy());
+    it("works", () => expect(SyncState).toBeTruthy());
 });
