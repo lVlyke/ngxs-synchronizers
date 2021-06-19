@@ -574,7 +574,7 @@ function read(
 ): Observable<T[PropKey]>
 ```
 
-See `Synchronizer.read`.
+See [`Synchronizer.read`](#synchronizer.read).
 
 #### `PropertySynchronizer.write`
 
@@ -621,7 +621,7 @@ function read(
 ): Observable<T[PropKey]>
 ```
 
-See `Synchronizer.read`.
+See [`Synchronizer.read`](#synchronizer.read).
 
 #### `CollectionSynchronizer.write`
 
