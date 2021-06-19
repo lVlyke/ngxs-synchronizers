@@ -31,7 +31,9 @@ ngxs-synchronizers requires **@ngxs/store** as a dependency. Both can be install
 npm install @ngxs/store ngxs-synchronizers
 ```
 
-Since ngxs-synchronizers is built on top of NGXS, it is important to read through the [NGXS documentation](https://www.ngxs.io/) to understand how NGXS works before proceeding.
+You must import the `NgxsSyncModule` module into the root of your application.
+
+Since ngxs-synchronizers is built on top of NGXS, it is recommended to read through the [NGXS documentation](https://www.ngxs.io/) to understand how NGXS works before proceeding.
 
 ## Defining a state
 _[NGXS docs](https://www.ngxs.io/concepts/state)_
