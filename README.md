@@ -6,19 +6,19 @@ Easily keep your app's local state synchronized with your backend, databases and
 * [**Features**](#features)
 * [**Installation**](#installation)
 * [**Quick start**](#quick-start)
-* [**Tutorial**](/docs/usage-guide.md)
-* API reference
+* [**Full usage guide**](/docs/usage-guide.md)
+* API reference (coming soon)
 
 ## About
 
-**ngxs-synchronizers** is an extension to NGXS that allows for easy synchronization between a local NGXS state and an external data source (backend service, database, JSON file, etc) through special Angular services called _Synchronizers_. ngxs-synchronizers can be used to fetch new data from an external data source, _require_ data that isn't already present in the app (allowing for zero-configuration caching), and can be used to listen to remote requests for easily managing complex UI interactions that rely on synchronization of asynchronous data requests.
+**ngxs-synchronizers** is an extension to NGXS that allows for easy synchronization between a local NGXS state and an external data source (i.e. backend service, database, JSON file, etc.) through special Angular services called _Synchronizers_. Synchronizers can be used to read and write data from an external data source, and can be used to more easily manage application state synchronization and data dependency requirements.
 
-Check out the [quick start guide](#quick-start) if you're already familiar with NGXS and want to add ngxs-synchronizers to your existing app, or read through the [full tutorial](/docs/usage-guide.md) for a more thorough walkthrough.
+Check out the [quick start guide](#quick-start) if you're already familiar with NGXS and want to quickly add ngxs-synchronizers to your existing app. The [full usage guide](/docs/usage-guide.md) gives a complete walkthrough of each feature.
 
 ## Features
 
 * **Easy to configure** - Straightforward configuration that can be used accross your whole application or targeted at specific modules.
-* **Efficient** - ngxs-synchronizers uses RxJS for efficient updating of data. Duplicate data requests are automatically batched into single requests and all synchronization requests can be observed and cancelled.
+* **Efficient** - ngxs-synchronizers uses RxJS for efficient updating of data. Duplicate data requests are automatically batched into single requests and all synchronization requests can be observed and cancelled. Data can be conditionally required, allowing for zero-configuration caching and lazy-loading of requests.
 * **Easy to integrate** - ngxs-synchronizers integrates transparently with NGXS and makes it feel like part of NGXS instead of yet another library.
 
 ## Installation
