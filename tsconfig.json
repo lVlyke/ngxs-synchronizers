@@ -26,9 +26,6 @@
     "typeRoots": [
         "node_modules/@types"
     ],
-    "atom": {
-        "rewriteTsConfig": false
-    },
     "angularCompilerOptions": {
         "skipTemplateCodegen": true,
         "strictMetadataEmit": true

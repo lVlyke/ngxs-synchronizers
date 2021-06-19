@@ -6,14 +6,14 @@ Easily keep your app's local state synchronized with your backend, databases and
 * [**Features**](#features)
 * [**Installation**](#installation)
 * [**Quick start**](#quick-start)
-* [**Full usage guide**](/docs/usage-guide.md)
-* API reference (coming soon)
+* [**Detailed usage guide**](/docs/usage-guide.md)
+* [**API reference**](/docs/api-reference.md)
 
 ## About
 
 **ngxs-synchronizers** is an extension to NGXS that allows for easy synchronization between a local NGXS state and an external data source (i.e. backend service, database, JSON file, etc.) through special Angular services called _Synchronizers_. Synchronizers can be used to read and write data from an external data source, and can be used to more easily manage application state synchronization and data dependency requirements.
 
-Check out the [quick start guide](#quick-start) if you're already familiar with NGXS and want to quickly add ngxs-synchronizers to your existing app. The [full usage guide](/docs/usage-guide.md) gives a complete walkthrough of each feature.
+Check out the [quick start guide](#quick-start) if you're already familiar with NGXS and want to quickly add ngxs-synchronizers to your existing app. The [full usage guide](/docs/usage-guide.md) gives a complete walkthrough of each feature. A full [**API reference**](/docs/api-reference.md) is also available.
 
 ## Features
 

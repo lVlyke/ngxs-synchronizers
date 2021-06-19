@@ -10,7 +10,7 @@ export type SynchronizerDictionary<T> = {
 export namespace SynchronizerDictionary {
 
     export function keys<T>(dict: SynchronizerDictionary<T>): Array<keyof T> {
-        return Object.keys(dict || {}) as Array<keyof T>;
+        return isCollectionSynchronizer(dict) ? [] : Object.keys(dict || {}) as Array<keyof T>;
     }
 
     export function isCollectionSynchronizer<T>(

@@ -39,7 +39,9 @@ export class StateSelector<T> {
     }
 
     public definedProperty<PropT extends keyof T>(propertyName: PropT): Observable<T[PropT]> {
-        return this.property<PropT>(propertyName).pipe(filter<T[PropT]>(Boolean));
+        return this.property<PropT>(propertyName).pipe(
+            filter<T[PropT]>(value => value !== null && value !== undefined)
+        );
     }
 
     public isSyncingProperty(propertyName: keyof T): Observable<boolean> {

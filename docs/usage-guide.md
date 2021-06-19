@@ -1,5 +1,7 @@
 # NGXS Synchronizers Usage Guide
 
+A full [**API reference**](/docs/api-reference.md) is also available.
+
 * [**Installation**](#installation)
 * **SyncState**
   * [**Defining a state**](#defining-a-state)
@@ -341,7 +343,7 @@ import { Injector } from '@angular/core';
 import { StateSynchronizer } from 'ngxs-synchronizers';
 
 @Injectable({ providedIn: 'root' })
-export class SessionSynchronizer implements StateSynchronizer<AppData, "session"> {
+export class SessionSynchronizer extends StateSynchronizer<AppData, "session"> {
 
     constructor(injector: Injector) {
         // Use the child `SessionState`
