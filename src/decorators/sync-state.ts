@@ -67,8 +67,9 @@ export namespace SyncState {
             $class: SyncClass<StateT>
         ): Type<StateT, PropertyT> {
             if (!updateActions.has($class)) {
+                const opts = SyncClass.getStoreOptions($class);
                 updateActions.set($class, class extends UpdateAction<StateT, PropertyT> {
-                    public static readonly type: string = `[${$class.name} sync] Update field`;
+                    public static readonly type: string = `[${opts.name} sync] Update field`;
                 });
             }
 
