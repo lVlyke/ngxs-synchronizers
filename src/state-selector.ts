@@ -1,5 +1,5 @@
 
-import { BehaviorSubject, empty, forkJoin, merge, Observable, of, throwError, zip } from "rxjs";
+import { BehaviorSubject, EMPTY, forkJoin, merge, Observable, of, throwError, zip } from "rxjs";
 import { catchError, distinctUntilChanged, filter, map, mergeMap, publishReplay, refCount, take, tap } from "rxjs/operators";
 import { SyncClass } from "./decorators/sync-class";
 import { SyncState } from "./decorators/sync-state";
@@ -21,7 +21,7 @@ export class StateSelector<T> {
     constructor(
         private store: SyncStore,
         private stateClass: SyncClass<T>,
-        private state$: Observable<T>
+        private state$: Observable<T | undefined>
     ) {}
 
     public dispatch<PropT extends keyof T>(propertyName: PropT, value: T[PropT]): Observable<T> {
@@ -30,8 +30,8 @@ export class StateSelector<T> {
         return this.store.dispatch(new PropUpdateAction(propertyName, value));
     }
 
-    public property<PropT extends keyof T>(propertyName: PropT): Observable<T[PropT]> {
-        return this.state$.pipe(map((state: T) => state[propertyName]));
+    public property<PropT extends keyof T>(propertyName: PropT): Observable<T[PropT] | undefined> {
+        return this.state$.pipe(map((state: T) => state?.[propertyName]));
     }
 
     public properties(): Observable<T> {
@@ -135,7 +135,7 @@ export class StateSelector<T> {
         return this.state$.pipe(
             take(1),
             mergeMap(state => {
-                if (state[propertyName]) {
+                if (state?.[propertyName] !== undefined && state?.[propertyName] !== null) {
                     return of(state);
                 } else {
                     return this.sync<RequestParamsT>(propertyName, options);
@@ -295,7 +295,7 @@ export class StateSelector<T> {
         options = options || {};
 
         if (propertyNames.length === 0) {
-            return empty();
+            return EMPTY;
         }
 
         // Update each required propertyName

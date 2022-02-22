@@ -51,7 +51,11 @@ export namespace SyncState {
                     context: StateContext<StateT>,
                     { property, payload }: SyncState.UpdateAction<StateT, PropertyT>
                 ) {
-                    context.patchState({ [property]: payload } as any);
+                    if (context.getState() === undefined || context.getState() === null) {
+                        context.setState({ [property]: payload } as any);
+                    } else {
+                        context.patchState({ [property]: payload } as any);
+                    }
                 }
             });
 
