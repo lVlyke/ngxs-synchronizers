@@ -1,12 +1,12 @@
 {
-    "spec_dir": "spec/build/spec",
-    "spec_files": [
-      "**/*[sS]pec.js"
-    ],
-    "helpers": [
-      "helpers/**/*.js"
-    ],
-    "stopSpecOnExpectationFailure": false,
-    "random": true
-  }
-  
+  "spec_dir": "spec/build/spec",
+  "jsLoader": "import",
+  "spec_files": [
+    "**/*[sS]pec.js"
+  ],
+  "helpers": [
+    "helpers/main.js"
+  ],
+  "stopSpecOnExpectationFailure": false,
+  "random": true
+}
