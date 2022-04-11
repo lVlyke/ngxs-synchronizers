@@ -63,7 +63,7 @@ export namespace SyncState {
             Action(Type<StateT>($class))(
                 $class.prototype,
                 UPDATE_ACTION_FN_KEY,
-                Object.getOwnPropertyDescriptor($class.prototype, UPDATE_ACTION_FN_KEY)
+                Object.getOwnPropertyDescriptor($class.prototype, UPDATE_ACTION_FN_KEY)!
             );
         }
 
@@ -77,7 +77,7 @@ export namespace SyncState {
                 });
             }
 
-            return updateActions.get($class);
+            return updateActions.get($class)!;
         }
     }
 }

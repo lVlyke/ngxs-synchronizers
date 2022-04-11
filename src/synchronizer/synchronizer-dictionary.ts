@@ -22,7 +22,7 @@ export namespace SynchronizerDictionary {
     export function resolveSynchronizer<T>(
         dict: SynchronizerDictionary<T>,
         propKey: keyof T
-    ): Type<Synchronizer<T, keyof T, unknown, unknown>> {
+    ): Type<Synchronizer<T, keyof T, unknown, unknown>> | undefined {
         return isCollectionSynchronizer(dict) ? dict : dict[propKey];
     }
 
