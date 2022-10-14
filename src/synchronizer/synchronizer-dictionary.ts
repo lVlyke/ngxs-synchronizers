@@ -36,7 +36,7 @@ export namespace SynchronizerDictionary {
         if (!!synchronizerDef) {
             return injector.get(synchronizerDef);
         } else {
-            throw new Error(`A Synchronizer has not been defined for property '${propKey}.`);
+            throw new Error(`A Synchronizer has not been defined for property '${String(propKey)}.`);
         }
     }
 }

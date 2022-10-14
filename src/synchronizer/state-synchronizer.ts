@@ -27,7 +27,7 @@ export abstract class StateSynchronizer<
         const stateSelector = syncStore.state<T[PropKey]>(this.propertyState);
 
         // Sync each property in the sub-store that has a synchronizer
-        return this.readSubset(SynchronizerDictionary.keys(stateSelector.synchronizers)) as Observable<T[PropKey]>;
+        return this.readSubset(SynchronizerDictionary.keys(stateSelector.synchronizers ?? {})) as Observable<T[PropKey]>;
     }
 
     protected readSubset(properties: Array<keyof T[PropKey]>): Observable<T[PropKey]> {

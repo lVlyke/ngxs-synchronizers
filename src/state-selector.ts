@@ -31,16 +31,16 @@ export class StateSelector<T> {
     }
 
     public property<PropT extends keyof T>(propertyName: PropT): Observable<T[PropT] | undefined> {
-        return this.state$.pipe(map((state: T) => state?.[propertyName]));
+        return this.state$.pipe(map(state => state?.[propertyName]));
     }
 
-    public properties(): Observable<T> {
+    public properties(): Observable<T | undefined> {
         return this.state$;
     }
 
     public definedProperty<PropT extends keyof T>(propertyName: PropT): Observable<T[PropT]> {
         return this.property<PropT>(propertyName).pipe(
-            filter<T[PropT]>(value => value !== null && value !== undefined)
+            filter((value): value is T[PropT] => value !== null && value !== undefined)
         );
     }
 
@@ -149,7 +149,7 @@ export class StateSelector<T> {
         options?: Synchronizer.ReadOptions<RequestParamsT>
     ): Observable<T> {
         if (propertyNames.length === 0) {
-            return this.state$.pipe(take(1));
+            return this.state$.pipe(take<T | undefined>(1)) as Observable<T>;
         } else {
             const errors: any[] = [];
             return forkJoin(propertyNames.map(propertyName => {
@@ -162,7 +162,7 @@ export class StateSelector<T> {
             })).pipe(
                 mergeMap(() => {
                     if (errors.length === 0) {
-                        return this.state$.pipe(take(1));
+                        return this.state$.pipe(take<T | undefined>(1)) as Observable<T>;
                     } else {
                         return throwError(errors);
                     }
@@ -189,28 +189,28 @@ export class StateSelector<T> {
         if (!synchronizer.proxy) {
             if (options.clearStore) {
                 // TODO-Synchronize on this?
-                this.dispatch(propertyName, undefined).subscribe();
+                this.dispatch(propertyName, undefined!).subscribe();
             }
 
             if (synchronizer.requiredProperties && synchronizer.requiredProperties.some(requiredPropertyName => requiredPropertyName === propertyName)) {
-                return throwError(`${errorPrefix} Synchronizer for "${propertyName}" requires a reference to itself.`);
+                return throwError(`${errorPrefix} Synchronizer for "${String(propertyName)}" requires a reference to itself.`);
             }
         }
 
         return this.pendingRequests$.pipe(
             take(1),
             mergeMap((pendingRequests) => {
-                let pendingRequest$ = pendingRequests[propertyName];
+                let pendingRequest$ = pendingRequests[propertyName] as Observable<T>;
 
-                if (pendingRequest$ && !options.clearStore) {
+                if (pendingRequest$ && !options!.clearStore) {
                     // Use the existing request if this value is currently being requested
                     return pendingRequest$;
                 } else {
                     // First request any required fields needed to fetch the propertyName
                     if (synchronizer.proxy) {
-                        pendingRequest$ = this.syncAll<RequestParamsT>(synchronizer.requiredProperties, options);
+                        pendingRequest$ = this.syncAll<RequestParamsT>(synchronizer.requiredProperties ?? [], options);
                     } else {
-                        pendingRequest$ = this.requireAll<RequestParamsT>(synchronizer.requiredProperties || []);
+                        pendingRequest$ = this.requireAll<RequestParamsT>(synchronizer.requiredProperties ?? []);
                     }
 
                     // Then fetch the propertyName
@@ -218,11 +218,11 @@ export class StateSelector<T> {
                         mergeMap((requiredDetails: any) => synchronizer.read(requiredDetails, { propertyName, ...options })),
                         mergeMap((value: any) => this.dispatch(propertyName, value)), // Update the store value
                         catchError((error) => {
-                            this.clearPropertyUpdater(propertyName, pendingRequest$);
+                            this.clearPropertyUpdater(propertyName, pendingRequest$!);
                             return throwError(error);
                         }),
-                        tap(() => this.clearPropertyUpdater(propertyName, pendingRequest$)), // Remove the pending request
-                        mergeMap(() => this.state$.pipe(take(1))), // Get the newly updated state
+                        tap(() => this.clearPropertyUpdater(propertyName, pendingRequest$!)), // Remove the pending request
+                        mergeMap(() => this.state$.pipe(take<T | undefined>(1)) as Observable<T>), // Get the newly updated state
                         publishReplay(1),
                         refCount()
                     );
@@ -241,7 +241,7 @@ export class StateSelector<T> {
         options = options || {};
 
         if (propertyNames.length === 0) {
-            return this.state$.pipe(take(1));
+            return this.state$.pipe(take<T | undefined>(1)) as Observable<T>;
         }
 
         // Update each required propertyName
@@ -253,7 +253,7 @@ export class StateSelector<T> {
             })))).pipe(
                 mergeMap(() => {
                     if (errors.length === 0) {
-                        return this.state$.pipe(take(1));
+                        return this.state$.pipe(take<T | undefined>(1)) as Observable<T>;
                     } else {
                         return throwError(`Error syncing properties: ${errors.join(", ")}`);
                     }
@@ -276,13 +276,13 @@ export class StateSelector<T> {
         }
 
         if (!synchronizer.write) {
-            return throwError(`${errorPrefix} Synchronizer for "${propertyName}" doesn't have a write method defined.`);
+            return throwError(`${errorPrefix} Synchronizer for "${String(propertyName)}" doesn't have a write method defined.`);
         }
 
         // Write the latest data in the store
         return this.property(propertyName).pipe(
             take(1),
-            mergeMap(data => synchronizer.write(data, { propertyName, ...options })),
+            mergeMap(data => synchronizer.write!(data!, { propertyName, ...options })),
             publishReplay(1),
             refCount()
         );
@@ -329,7 +329,7 @@ export class StateSelector<T> {
     private resolveSynchronizer<PropT extends keyof T, RequestParamsT>(propertyName: PropT): Synchronizer<T, PropT, RequestParamsT, RequestParamsT> {
         return SynchronizerDictionary.resolveSynchronizerInstance(
             this.injector,
-            this.synchronizers,
+            this.synchronizers ?? {},
             propertyName
         ) as Synchronizer<T, PropT, never, RequestParamsT>;
     }

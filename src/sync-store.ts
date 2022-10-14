@@ -45,6 +45,6 @@ export class SyncStore extends Store {
             this._selectorMap.set(syncState, new StateSelector<T>(this, syncState, state$));
         }
 
-        return this._selectorMap.get(syncState);
+        return this._selectorMap.get(syncState)!;
     }
 }

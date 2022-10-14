@@ -1,7 +1,6 @@
 {
-  "$schema": "./node_modules/ng-packagr/package.schema.json",
   "name": "ngxs-synchronizers",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Easily keep your app's local state synchronized with your backend, databases and more! ngxs-synchronizers simplifies synchronizing your NGXS-based application state with external data sources.",
   "author": "Mychal Thompson <mychal.r.thompson@gmail.com>",
   "license": "MIT",
@@ -32,17 +31,17 @@
     "lint": "./node_modules/.bin/tslint --project ."
   },
   "peerDependencies": {
-    "@angular/core": ">=8.0.0 <14.0.0",
+    "@angular/core": ">=8.0.0 <15.0.0",
     "@ngxs/store": ">=3.6.0",
     "rxjs": "6.x.x - 7.x.x",
     "tslib": "^2.0.0"
   },
   "devDependencies": {
-    "@angular/common": "^13.3.2",
-    "@angular/compiler": "^13.3.2",
-    "@angular/compiler-cli": "^13.3.2",
-    "@angular/core": "^13.3.2",
-    "@ngxs/store": "^3.7.3",
+    "@angular/common": "^14.2.6",
+    "@angular/compiler": "^14.2.6",
+    "@angular/compiler-cli": "^14.2.6",
+    "@angular/core": "^14.2.6",
+    "@ngxs/store": "^3.7.5",
     "@types/jasmine": "^4.0.2",
     "@types/node": "^17.0.23",
     "detest-bdd": "^1.2.0",
@@ -50,18 +49,13 @@
     "istanbul": "^0.4.5",
     "istanbul-cobertura-badger": "^1.3.1",
     "jasmine": "^4.0.2",
-    "ng-packagr": "^13.3.0",
+    "ng-packagr": "14.2.1",
     "rxjs": "~6.5.5",
     "source-map-support": "^0.5.3",
     "tslib": "^2.3.0",
     "tslint": "^5.11.0",
-    "typescript": "~4.6.3",
+    "typescript": "~4.8.4",
     "zone.js": "^0.11.4"
   },
-  "dependencies": {},
-  "ngPackage": {
-    "lib": {
-      "entryFile": "./src/index.ts"
-    }
-  }
+  "dependencies": {}
 }
