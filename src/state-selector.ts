@@ -1,4 +1,5 @@
 
+import { Injector } from "@angular/core";
 import { BehaviorSubject, EMPTY, forkJoin, merge, Observable, of, throwError, zip } from "rxjs";
 import { catchError, distinctUntilChanged, filter, map, mergeMap, publishReplay, refCount, take, tap } from "rxjs/operators";
 import { SyncClass } from "./decorators/sync-class";
@@ -13,21 +14,24 @@ type PendingStateRequestDictionary<T> = {
 
 export class StateSelector<T> {
 
-    public readonly synchronizers = SyncClass.getStoreOptions(this.stateClass).synchronizers;
+    public readonly synchronizers?: SynchronizerDictionary<T>;
 
-    private readonly injector = this.store.injector;
+    private readonly injector: Injector;
     private readonly pendingRequests$ = new BehaviorSubject<PendingStateRequestDictionary<T>>({});
 
     constructor(
         private store: SyncStore,
         private stateClass: SyncClass<T>,
         private state$: Observable<T | undefined>
-    ) {}
+    ) {
+        this.synchronizers = SyncClass.getStoreOptions(stateClass).synchronizers;
+        this.injector = store.injector;
+    }
 
     public dispatch<PropT extends keyof T>(propertyName: PropT, value: T[PropT]): Observable<T> {
         const PropUpdateAction = SyncState.UpdateAction.Type<T, PropT>(this.stateClass);
 
-        return this.store.dispatch(new PropUpdateAction(propertyName, value));
+        return this.store.dispatch(new PropUpdateAction(propertyName, value)) as Observable<T>;
     }
 
     public property<PropT extends keyof T>(propertyName: PropT): Observable<T[PropT] | undefined> {
@@ -215,13 +219,13 @@ export class StateSelector<T> {
 
                     // Then fetch the propertyName
                     pendingRequest$ = pendingRequest$.pipe(
-                        mergeMap((requiredDetails: any) => synchronizer.read(requiredDetails, { propertyName, ...options })),
-                        mergeMap((value: any) => this.dispatch(propertyName, value)), // Update the store value
+                        mergeMap((requiredDetails) => synchronizer.read(requiredDetails, { propertyName, ...options })),
+                        mergeMap((value) => this.dispatch(propertyName, value)), // Update the store value
                         catchError((error) => {
-                            this.clearPropertyUpdater(propertyName, pendingRequest$!);
+                            this.clearPropertyUpdater(propertyName, pendingRequest$);
                             return throwError(error);
                         }),
-                        tap(() => this.clearPropertyUpdater(propertyName, pendingRequest$!)), // Remove the pending request
+                        tap(() => this.clearPropertyUpdater(propertyName, pendingRequest$)), // Remove the pending request
                         mergeMap(() => this.state$.pipe(take<T | undefined>(1)) as Observable<T>), // Get the newly updated state
                         publishReplay(1),
                         refCount()

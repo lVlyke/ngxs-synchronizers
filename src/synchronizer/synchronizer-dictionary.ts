@@ -16,6 +16,7 @@ export namespace SynchronizerDictionary {
     export function isCollectionSynchronizer<T>(
         dict: SynchronizerDictionary<T>
     ): dict is Type<CollectionSynchronizer<T>> {
+        /* eslint-disable @typescript-eslint/no-unsafe-member-access */
         return typeof (dict as Type<CollectionSynchronizer<T>>)?.prototype?.read === "function";
     }
 

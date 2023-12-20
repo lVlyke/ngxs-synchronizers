@@ -36,7 +36,7 @@ export namespace SyncClass {
     }
 
     export function resolveParent<T>($class: SyncClass<T>): SyncClass<unknown> {
-        return metadata<T>($class)[PARENT_REF_KEY];
+        return metadata<T>($class)[PARENT_REF_KEY] as SyncClass<unknown>;
     }
 
     export function resolveParents<T>($class: SyncClass<T>): SyncClass<unknown>[] {
@@ -61,6 +61,6 @@ export namespace SyncClass {
             return metadata<T>(stateRef);
         }
 
-        return descriptor.value;
+        return descriptor.value as Metadata<T>;
     }
 }

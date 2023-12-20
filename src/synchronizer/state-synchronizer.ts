@@ -27,7 +27,7 @@ export abstract class StateSynchronizer<
         const stateSelector = syncStore.state<T[PropKey]>(this.propertyState);
 
         // Sync each property in the sub-store that has a synchronizer
-        return this.readSubset(SynchronizerDictionary.keys(stateSelector.synchronizers ?? {})) as Observable<T[PropKey]>;
+        return this.readSubset(SynchronizerDictionary.keys(stateSelector.synchronizers ?? {}));
     }
 
     protected readSubset(properties: Array<keyof T[PropKey]>): Observable<T[PropKey]> {
@@ -36,7 +36,7 @@ export abstract class StateSynchronizer<
 
         // Sync each property in the sub-store that has a synchronizer and combine with the current store's data
         return this.readProperties(stateSelector, properties).pipe(
-            map(results => Object.assign({}, ...results)),
+            map(results => Object.assign({}, ...results) as T[PropKey]),
             switchMap(newProperties => stateSelector.properties().pipe(take(1), map(originalProperties => ({
                 ...originalProperties,
                 ...newProperties
@@ -59,6 +59,8 @@ export abstract class StateSynchronizer<
         propKey: SubPropT
     ): Observable<Partial<T[PropKey]>> {
         // Use `syncProperty` to invoke the synchronizer for this property
-        return stateSelector.syncProperty<SubPropT>(propKey).pipe(map(result => ({ [propKey]: result }) as any));
+        return stateSelector.syncProperty<SubPropT>(propKey).pipe(
+            map(result => ({ [propKey]: result }) as any as Partial<T[PropKey]>)
+        );
     }
 }

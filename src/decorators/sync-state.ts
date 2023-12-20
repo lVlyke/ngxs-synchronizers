@@ -12,12 +12,15 @@ export function SyncState<T>(options: SyncStoreOptions<T>): ClassDecorator {
 
         // Record the parent store class for any child stores
         if (options.children) {
-            options.children.forEach(child => SyncClass.setParent(child, constructor));
+            options.children.forEach(child => SyncClass.setParent(
+                child as SyncClass<unknown>,
+                constructor
+            ));
         }
 
         // Apply the @State() decorator to the class
         State<T>(options)(constructor);
-    } as any;
+    } as any as ClassDecorator;
 }
 
 export namespace SyncState {
@@ -40,7 +43,7 @@ export namespace SyncState {
         }
 
         const UPDATE_ACTION_FN_KEY = Symbol("$UPDATE_ACTION_FN");
-        const updateActions = new Map<SyncClass<any>, Type<any, any>>();
+        const updateActions = new Map<SyncClass<unknown>, Type<any, any>>();
 
         export function bootstrapClass<StateT>($class: SyncClass<StateT>): void {
             // Add the update action function to the class
@@ -52,16 +55,16 @@ export namespace SyncState {
                     { property, payload }: SyncState.UpdateAction<StateT, PropertyT>
                 ) {
                     if (context.getState() === undefined || context.getState() === null) {
-                        context.setState({ [property]: payload } as any);
+                        context.setState({ [property]: payload } as StateT);
                     } else {
-                        context.patchState({ [property]: payload } as any);
+                        context.patchState({ [property]: payload } as StateT);
                     }
                 }
             });
 
             // Apply the @Action() decorator to the new function
             Action(Type<StateT>($class))(
-                $class.prototype,
+                $class.prototype as object,
                 UPDATE_ACTION_FN_KEY,
                 Object.getOwnPropertyDescriptor($class.prototype, UPDATE_ACTION_FN_KEY)!
             );
@@ -77,7 +80,7 @@ export namespace SyncState {
                 });
             }
 
-            return updateActions.get($class)!;
+            return updateActions.get($class)! as Type<StateT, PropertyT>;
         }
     }
 }
