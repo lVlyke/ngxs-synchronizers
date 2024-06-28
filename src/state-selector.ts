@@ -168,7 +168,7 @@ export class StateSelector<T> {
                     if (errors.length === 0) {
                         return this.state$.pipe(take<T | undefined>(1)) as Observable<T>;
                     } else {
-                        return throwError(errors);
+                        return throwError((): any[] => errors);
                     }
                 })
             );
@@ -186,7 +186,7 @@ export class StateSelector<T> {
         try {
             synchronizer = this.resolveSynchronizer(propertyName);
         } catch (error) {
-            return throwError(error);
+            return throwError(() => error);
         }
 
         // Check for cached values/pending requests only if this isn't a dependent requestor
@@ -197,7 +197,7 @@ export class StateSelector<T> {
             }
 
             if (synchronizer.requiredProperties && synchronizer.requiredProperties.some(requiredPropertyName => requiredPropertyName === propertyName)) {
-                return throwError(`${errorPrefix} Synchronizer for "${String(propertyName)}" requires a reference to itself.`);
+                return throwError(() => `${errorPrefix} Synchronizer for "${String(propertyName)}" requires a reference to itself.`);
             }
         }
 
@@ -206,7 +206,7 @@ export class StateSelector<T> {
             mergeMap((pendingRequests) => {
                 let pendingRequest$ = pendingRequests[propertyName] as Observable<T>;
 
-                if (pendingRequest$ && !options!.clearStore) {
+                if (pendingRequest$ && !options.clearStore) {
                     // Use the existing request if this value is currently being requested
                     return pendingRequest$;
                 } else {
@@ -223,7 +223,7 @@ export class StateSelector<T> {
                         mergeMap((value) => this.dispatch(propertyName, value)), // Update the store value
                         catchError((error) => {
                             this.clearPropertyUpdater(propertyName, pendingRequest$);
-                            return throwError(error);
+                            return throwError((): any => error);
                         }),
                         tap(() => this.clearPropertyUpdater(propertyName, pendingRequest$)), // Remove the pending request
                         mergeMap(() => this.state$.pipe(take<T | undefined>(1)) as Observable<T>), // Get the newly updated state
@@ -259,7 +259,7 @@ export class StateSelector<T> {
                     if (errors.length === 0) {
                         return this.state$.pipe(take<T | undefined>(1)) as Observable<T>;
                     } else {
-                        return throwError(`Error syncing properties: ${errors.join(", ")}`);
+                        return throwError(() => `Error syncing properties: ${errors.join(", ")}`);
                     }
                 })
             );
@@ -276,11 +276,11 @@ export class StateSelector<T> {
         try {
             synchronizer = this.resolveSynchronizer(propertyName);
         } catch (error) {
-            return throwError(error);
+            return throwError(() => error);
         }
 
         if (!synchronizer.write) {
-            return throwError(`${errorPrefix} Synchronizer for "${String(propertyName)}" doesn't have a write method defined.`);
+            return throwError(() => `${errorPrefix} Synchronizer for "${String(propertyName)}" doesn't have a write method defined.`);
         }
 
         // Write the latest data in the store
@@ -313,7 +313,7 @@ export class StateSelector<T> {
                     if (errors.length === 0) {
                         return of(results);
                     } else {
-                        return throwError(`Error exporting properties: ${errors.join(", ")}`);
+                        return throwError(() => `Error exporting properties: ${errors.join(", ")}`);
                     }
                 })
             );

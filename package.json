@@ -1,6 +1,6 @@
 {
   "name": "ngxs-synchronizers",
-  "version": "2.3.0",
+  "version": "3.0.0",
   "description": "Easily keep your app's local state synchronized with your backend, databases and more! ngxs-synchronizers simplifies synchronizing your NGXS-based application state with external data sources.",
   "author": "Mychal Thompson <mychal.r.thompson@gmail.com>",
   "license": "MIT",
@@ -31,35 +31,35 @@
     "lint": "npx eslint -c .eslintrc.cjs --ext .ts ./src"
   },
   "peerDependencies": {
-    "@angular/core": ">=8.0.0 <18.0.0",
-    "@ngxs/store": ">=3.6.0",
+    "@angular/core": ">=18.0.0 <19.0.0",
+    "@ngxs/store": ">=18.0.0",
     "rxjs": "7.x.x",
-    "tslib": "^2.0.0"
+    "tslib": "^2.3.0"
   },
   "devDependencies": {
-    "@angular/common": "^17.0.7",
-    "@angular/compiler": "^17.0.7",
-    "@angular/compiler-cli": "^17.0.7",
-    "@angular/core": "^17.0.7",
-    "@ngxs/store": "^3.8.2",
+    "@angular/common": "^18.0.5",
+    "@angular/compiler": "^18.0.5",
+    "@angular/compiler-cli": "^18.0.5",
+    "@angular/core": "^18.0.5",
+    "@ngxs/store": "^18.0.0",
     "@types/jasmine": "^4.3.1",
-    "@types/node": "^18.16.0",
+    "@types/node": "^20.14.9",
     "@typescript-eslint/eslint-plugin": "^6.15.0",
     "@typescript-eslint/parser": "^6.15.0",
-    "c8": "^8.0.1",
+    "c8": "^10.1.2",
     "detest-bdd": "^1.2.1",
     "eslint": "^8.56.0",
     "eslint-plugin-jsdoc": "^46.9.1",
     "eslint-plugin-prefer-arrow": "^1.2.3",
-    "extensionless": "^1.9.6",
+    "extensionless": "^1.9.9",
     "fs-extra": "^11.2.0",
     "istanbul-cobertura-badger": "^1.3.1",
     "jasmine": "^4.6.0",
-    "ng-packagr": "17.0.3",
+    "ng-packagr": "^18.0.0",
     "rxjs": "^7.4.0",
     "source-map-support": "^0.5.3",
     "tslib": "^2.3.0",
-    "typescript": "~5.2.2",
-    "zone.js": "~0.14.2"
+    "typescript": "~5.4.5",
+    "zone.js": "~0.14.7"
   }
 }
