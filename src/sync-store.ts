@@ -1,40 +1,22 @@
-import { Injectable, Injector } from "@angular/core";
-import { Store } from "@ngxs/store";
+import { Injectable, Injector, Signal } from "@angular/core";
+import { Store, TypedSelector } from "@ngxs/store";
 import { SyncClass } from "./decorators/sync-class";
 import { StateSelector } from "./state-selector";
+import { Observable, Subscription } from "rxjs";
 
-interface InternalStore {
-    _stateStream: any;
-    _internalStateOperations: any;
-    _config: any;
-    _internalExecutionStrategy: any;
-    _stateFactory: any;
-}
+type ActionOrArrayOfActions<T> = T extends (infer U)[] ? NonNullable<U>[] : NonNullable<T>;
 
 @Injectable()
-export class SyncStore extends Store {
+export class SyncStore {
 
     public readonly injector: Injector;
+    private readonly store: Store;
     private readonly _selectorMap: Map<SyncClass<any>, StateSelector<any>>;
 
     constructor(injector: Injector, store: Store) {
-        const internalStore: InternalStore = store as any as InternalStore;
-
-        super(
-            /* eslint-disable @typescript-eslint/no-unsafe-argument */
-            internalStore._stateStream,
-            /* eslint-disable @typescript-eslint/no-unsafe-argument */
-            internalStore._internalStateOperations,
-            /* eslint-disable @typescript-eslint/no-unsafe-argument */
-            internalStore._config,
-            /* eslint-disable @typescript-eslint/no-unsafe-argument */
-            internalStore._internalExecutionStrategy,
-            /* eslint-disable @typescript-eslint/no-unsafe-argument */
-            internalStore._stateFactory,
-            undefined
-        );
 
         this.injector = injector;
+        this.store = store;
         this._selectorMap = new Map();
     }
 
@@ -55,5 +37,37 @@ export class SyncStore extends Store {
         }
 
         return this._selectorMap.get(syncState)!;
+    }
+
+    public dispatch<T>(actionOrActions: ActionOrArrayOfActions<T>): Observable<void> {
+        return this.store.dispatch<T>(actionOrActions);
+    }
+
+    public select<T>(selector: TypedSelector<T>): Observable<T> {
+        return this.store.select<T>(selector);
+    }
+
+    public selectOnce<T>(selector: TypedSelector<T>): Observable<T> {
+        return this.store.selectOnce<T>(selector);
+    }
+
+    public selectSnapshot<T>(selector: TypedSelector<T>): T {
+        return this.store.selectSnapshot<T>(selector);
+    }
+
+    public selectSignal<T>(selector: TypedSelector<T>): Signal<T> {
+        return this.store.selectSignal<T>(selector);
+    }
+
+    public subscribe(fn?: (value: any) => void): Subscription {
+        return this.store.subscribe(fn);
+    }
+
+    public snapshot(): any {
+        return this.store.snapshot();
+    }
+
+    public reset(state: any): void {
+        return this.store.reset(state);
     }
 }
